@@ -7,7 +7,7 @@
 }
 
 \description{
-	Function for optimal nonbipartite matching in randomized experiments and observational studies that directly balances the observed covariates.  \code{nmatch} allows the user to enforce different forms of covariate balance in the matched samples, such as moment balance (e.g., of means, variances, and correlations), distributional balance (e.g., fine balance, near-fine balance, strength-\emph{k} matching), or exact matching.  Among others, \code{nmatch} can be used in the design of randomized experiments for matching before randomization (Greevy et al. 2004, Zou and Zubizarreta 2015), and in observational studies for matching with doses and strengthening an instrumental variable (Lu et al. 2011).
+	Function for optimal nonbipartite matching in randomized experiments and observational studies that directly balances the observed covariates.  \code{nmatch} allows the user to enforce different forms of covariate balance in the matched samples, such as moment balance (e.g., of means, variances, and correlations), distributional balance (e.g., fine balance, near-fine balance, strength-\emph{k} balancing), and exact matching.  Among others, \code{nmatch} can be used in the design of randomized experiments for matching before randomization (Greevy et al. 2004, Zou and Zubizarreta 2015), and in observational studies for matching with doses and strengthening an instrumental variable (Baiocchi et al. 2010, Lu et al. 2011).
 }
 
 \usage{
@@ -58,7 +58,7 @@ where \code{fine_covs} is a matrix where each column is a nominal covariate for 
 
 \code{near = list(near_covs, near_pairs, near_groups)}.
 
-\code{near_covs} is a matrix where each column is a variable for near matching.  \code{near_pairs} is a vector determining the minimum distance between individual matched pairs for each variable in \code{near_covs}.  \code{near_groups} is a vector defining the maximum average distance (in aggregate) between matched groups for each covariate in \code{near_covs}.  If \code{near_covs} is specified, then either \code{near_pairs}, \code{near_covs}, or both must be specified as well, and the length of \code{near_pairs} and/or \code{near_groups} has to be equal to the number of columns of \code{near_covs}.}
+\code{near_covs} is a matrix where each column is a variable for near matching.  \code{near_pairs} is a vector determining the maximum distance between individual matched pairs for each variable in \code{near_covs}.  \code{near_groups} is a vector defining the maximum average distance (in aggregate) between matched groups for each covariate in \code{near_covs}.  If \code{near_covs} is specified, then either \code{near_pairs}, \code{near_covs}, or both must be specified as well, and the length of \code{near_pairs} and/or \code{near_groups} has to be equal to the number of columns of \code{near_covs}.}
 
 \item{far}{Far matching parameters: a list with three arguments, 
 
@@ -92,9 +92,9 @@ where \code{fine_covs} is a matrix where each column is a nominal covariate for 
 	
 	\item{obj_dist_mat}{value of the total sum of distances term of the objective function at the optimum;}
 	
-	\item{id_1}{indexes of the matched controls at the optimum;}
+	\item{id_1}{indexes of the matched units in group 1 at the optimum;}
 	
-	\item{id_2}{indexes of the matched controls at the optimum;}
+	\item{id_2}{indexes of the matched units in group 2 at the optimum;}
 	
 	\item{group_id}{matched pairs at the optimum;}
 	

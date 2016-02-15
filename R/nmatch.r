@@ -76,6 +76,8 @@ nmatch = function(dist_mat, subset_weight = NULL, total_pairs = NULL,
     solver = solver$name
   }
   
+  cat(format("  Building the matching problem..."), "\n")
+  
   #! Total number of units
   n_tot = nrow(dist_mat)
   

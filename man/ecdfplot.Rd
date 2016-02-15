@@ -53,7 +53,7 @@
 	# Indexes of the controls before matching
 	c_id_before = which(t_ind == 0)
 	
-	# Indixes of the matched controls (obtained using "allmatch" in the "mipmatch" package)
+	# Indixes of the matched controls (obtained using bmatch in designmatch)
 	c_id_after = c(80, 82, 35, 59, 69, 68, 34, 62, 104, 61, 106, 120, 56, 119, 28, 
 	113, 76, 118, 75, 71)
 	

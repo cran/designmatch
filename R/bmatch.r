@@ -100,7 +100,7 @@ bmatch = function(t_ind, dist_mat = NULL, subset_weight = NULL, n_controls = 1, 
   }
   
   #! Generate the parameters
-  cat(format("  Generating the parameters..."), "\n")
+  cat(format("  Building the matching problem..."), "\n")
   prmtrs = .problemparameters(t_ind, dist_mat, subset_weight, n_controls, total_pairs,
                              mom_covs, mom_tols,
                              ks_covs, ks_n_grid, ks_tols,

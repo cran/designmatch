@@ -66,7 +66,7 @@
 	X_mat = cbind(log2pop, popgrowth1939, popgrowth3339, emprate, indrate, rubble, 
 	rubblemiss, flats, flatsmiss, refugees)
 
-	# Indices of the matched controls (obtained using "meanmatch" in the "mipmatch" package)
+	# Indices of the matched controls (obtained using bmatch in designmatch)
 	c_id = c(67, 75, 39, 104, 38, 93, 79, 59, 64, 55, 106, 99, 97, 61, 82, 57, 
 	76, 47, 46, 49)
  
