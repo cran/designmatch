@@ -1,5 +1,5 @@
 #! bmatch
-bmatch = function(t_ind, dist_mat = NULL, subset_weight = NULL, n_controls = 1, total_pairs = NULL,
+bmatch = function(t_ind, dist_mat = NULL, subset_weight = NULL, n_controls = 1, total_groups = NULL,
                    mom = NULL,
                    ks = NULL,
                    exact = NULL,
@@ -16,9 +16,11 @@ bmatch = function(t_ind, dist_mat = NULL, subset_weight = NULL, n_controls = 1, 
   if (is.null(mom)) {
     mom_covs = NULL
     mom_tols = NULL
+    mom_targets = NULL
   } else {
     mom_covs = mom$covs
     mom_tols = mom$tols
+    mom_targets = mom$targets
   }
   
   if (is.null(ks)) {
@@ -101,8 +103,8 @@ bmatch = function(t_ind, dist_mat = NULL, subset_weight = NULL, n_controls = 1, 
   
   #! Generate the parameters
   cat(format("  Building the matching problem..."), "\n")
-  prmtrs = .problemparameters(t_ind, dist_mat, subset_weight, n_controls, total_pairs,
-                             mom_covs, mom_tols,
+  prmtrs = .problemparameters(t_ind, dist_mat, subset_weight, n_controls, total_groups,
+                             mom_covs, mom_tols, mom_targets,
                              ks_covs, ks_n_grid, ks_tols,
                              exact_covs,
                              near_exact_covs, near_exact_devs,
@@ -168,15 +170,15 @@ bmatch = function(t_ind, dist_mat = NULL, subset_weight = NULL, n_controls = 1, 
         }
         
         if (approximate == 1) {
-          rel = .relaxation_b(n_t, n_c, out$x, dist_mat, subset_weight, "gurobi")
+          rel = .relaxation_b(n_t, n_c, out$x, dist_mat, subset_weight, "gurobi", round_cplex, trace)
           out$x = rel$sol
           out$objval = rel$obj
           time = time + rel$time
         }
         
         #! Matched units indexes
-        t_id = sort(rep(1:n_t, n_c))[out$x==1]
-        c_id = (c_index+n_t)[out$x==1]
+        t_id = unique(sort(rep(1:n_t, n_c))[out$x[1:(n_t*n_c)]==1])
+        c_id = (c_index+n_t)[out$x[1:(n_t*n_c)]==1]
         
         #! Group (or pair) identifier
         group_id_t = 1:(length(t_id))
@@ -187,13 +189,13 @@ bmatch = function(t_ind, dist_mat = NULL, subset_weight = NULL, n_controls = 1, 
         obj_total = out$objval
         
         if (!is.null(dist_mat)) {
-          obj_dist_mat = sum(c(as.vector(matrix(t(dist_mat), nrow = 1, byrow = TRUE)) * out$x))
+          obj_dist_mat = sum(c(as.vector(matrix(t(dist_mat), nrow = 1, byrow = TRUE)) * out$x[1:(n_t*n_c)]==1))
         } else {
           obj_dist_mat = NULL
         }
       }
     } else {
-      stop('suggested package not installed')
+      stop('Required solver not installed')
     }
 
   }
@@ -231,7 +233,7 @@ bmatch = function(t_ind, dist_mat = NULL, subset_weight = NULL, n_controls = 1, 
         cat(format("  Optimal matches found"), "\n")
         
         if (approximate == 1) {
-          rel = .relaxation_b(n_t, n_c, out$xopt, dist_mat, subset_weight, "cplex")
+          rel = .relaxation_b(n_t, n_c, out$xopt, dist_mat, subset_weight, "cplex", round_cplex, trace)
           out$xopt = rel$sol
           out$obj = rel$obj
           time = time + rel$time
@@ -239,8 +241,8 @@ bmatch = function(t_ind, dist_mat = NULL, subset_weight = NULL, n_controls = 1, 
         
         
         #! Matched controls indexes  
-        t_id = sort(rep(1:n_t, n_c))[out$xopt==1]
-        c_id = (c_index+n_t)[out$xopt==1]	
+        t_id = unique(sort(rep(1:n_t, n_c))[out$xopt[1:(n_t*n_c)]==1])
+        c_id = (c_index+n_t)[out$xopt[1:(n_t*n_c)]==1]	
         
         #! Group (or pair) identifier
         group_id_t = 1:(length(t_id))
@@ -251,17 +253,16 @@ bmatch = function(t_ind, dist_mat = NULL, subset_weight = NULL, n_controls = 1, 
         obj_total = out$obj
         
         if (!is.null(dist_mat)) {
-          obj_dist_mat = sum(c(as.vector(matrix(t(dist_mat), nrow = 1, byrow = TRUE)) * out$xopt))
+          obj_dist_mat = sum(c(as.vector(matrix(t(dist_mat), nrow = 1, byrow = TRUE)) * out$xopt[1:(n_t*n_c)]==1))
         } else {
           obj_dist_mat = NULL
         }
         
       }
     } else {
-      stop('Suggested package not installed')
+      stop('Required solver not installed')
     }
 
-    
   }
   
   #! GLPK
@@ -295,7 +296,7 @@ bmatch = function(t_ind, dist_mat = NULL, subset_weight = NULL, n_controls = 1, 
       cat(format("  Optimal matches found"), "\n")
       
       if (approximate == 1) {
-        rel = .relaxation_b(n_t, n_c, out$solution, dist_mat, subset_weight, "glpk")
+        rel = .relaxation_b(n_t, n_c, out$solution, dist_mat, subset_weight, "glpk", round_cplex, trace)
         out$solution = rel$sol
         out$optimum = rel$obj
         time = time + rel$time
@@ -303,8 +304,8 @@ bmatch = function(t_ind, dist_mat = NULL, subset_weight = NULL, n_controls = 1, 
       
       
       #! Matched controls indexes	
-      t_id = sort(rep(1:n_t, n_c))[out$solution==1]
-      c_id = (c_index+n_t)[out$solution==1]	
+      t_id = unique(sort(rep(1:n_t, n_c))[out$solution[1:(n_t*n_c)]==1])
+      c_id = (c_index+n_t)[out$solution[1:(n_t*n_c)]==1]	
       
       #! Group (or pair) identifier
       group_id_t = 1:(length(t_id))
@@ -315,7 +316,7 @@ bmatch = function(t_ind, dist_mat = NULL, subset_weight = NULL, n_controls = 1, 
       obj_total = out$optimum
       
       if (!is.null(dist_mat)) {
-        obj_dist_mat = sum(c(as.vector(matrix(t(dist_mat), nrow = 1, byrow = TRUE)) * out$solution))
+        obj_dist_mat = sum(c(as.vector(matrix(t(dist_mat), nrow = 1, byrow = TRUE)) * out$solution[1:(n_t*n_c)]==1))
       } else {
         obj_dist_mat = NULL
       }
@@ -365,15 +366,15 @@ bmatch = function(t_ind, dist_mat = NULL, subset_weight = NULL, n_controls = 1, 
         cat(format("  Optimal matches found"), "\n")
         
         if (approximate == 1) {
-          rel = .relaxation_b(n_t, n_c, out$solution, dist_mat, subset_weight, "symphony")
+          rel = .relaxation_b(n_t, n_c, out$solution, dist_mat, subset_weight, "symphony", round_cplex, trace)
           out$solution = rel$sol
           out$objval = rel$obj
           time = time + rel$time
         }
         
         #! Matched controls indexes	
-        t_id = sort(rep(1:n_t, n_c))[out$solution==1]
-        c_id = (c_index+n_t)[out$solution==1]	
+        t_id = unique(sort(rep(1:n_t, n_c))[out$solution[1:(n_t*n_c)]==1])
+        c_id = (c_index+n_t)[out$solution[1:(n_t*n_c)]==1]	
         
         #! Group (or pair) identifier
         group_id_t = 1:(length(t_id))
@@ -384,14 +385,14 @@ bmatch = function(t_ind, dist_mat = NULL, subset_weight = NULL, n_controls = 1, 
         obj_total = out$objval
         
         if (!is.null(dist_mat)) {
-          obj_dist_mat = sum(c(as.vector(matrix(t(dist_mat), nrow = 1, byrow = TRUE)) * out$solution))
+          obj_dist_mat = sum(c(as.vector(matrix(t(dist_mat), nrow = 1, byrow = TRUE)) * out$solution[1:(n_t*n_c)]==1))
         } else {
           obj_dist_mat = NULL
         }
         
       }
     } else {
-      stop('suggested package not installed')
+      stop('Required solver not installed')
     }
 
   }

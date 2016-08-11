@@ -1,6 +1,6 @@
 #! Generate the parameters for bpmatch
-.problemparameters = function(t_ind, dist_mat, subset_weight, n_controls, total_pairs,
-                             mom_covs, mom_tols,
+.problemparameters = function(t_ind, dist_mat, subset_weight, n_controls, total_groups,
+                             mom_covs, mom_tols, mom_targets,
                              ks_covs, ks_n_grid, ks_tols,
                              exact_covs,
                              near_exact_covs, near_exact_devs,
@@ -79,8 +79,8 @@
   }
   
   #! Constraint matrix, Amat
-  constraintmat_out = .constraintmatrix(t_ind, n_controls, total_pairs,
-                                       mom_covs, mom_tols,
+  constraintmat_out = .constraintmatrix(t_ind, n_controls, total_groups,
+                                       mom_covs, mom_tols, mom_targets,
                                        ks_covs, ks_covs_aux, ks_n_grid, ks_tols,
                                        exact_covs,
                                        near_exact_covs, near_exact_devs,
@@ -107,13 +107,18 @@
   }
   
   #! Part 3: moments
-  if (!is.null(mom_covs)) {
+  if (!is.null(mom_covs) & is.null(mom_targets)) {
     bvec = c(bvec, rep(0, 2*n_mom_covs))	
   }	
   
   #! Part 4: K-S
   if (!is.null(ks_covs)) {
     bvec = c(bvec, rep(0, 2*n_ks_covs*max_ks_n_grid))
+  }
+  
+  #! Part 3b: Target
+  if (!is.null(mom_covs) & !is.null(mom_targets)) {
+    bvec = c(bvec, rep(0, 4*n_mom_covs))
   }
   
   #! Part 5: exact
@@ -176,9 +181,15 @@
     bvec = c(bvec, sum(use_controls)) 
   }
   
-  #! Part 12: total_pairs
-  if (!is.null(total_pairs)) {
-    bvec = c(bvec, total_pairs)
+  #! Part 12: total_groups
+  if (!is.null(total_groups)) {
+    if (!is.null(n_controls)) {
+      bvec = c(bvec, total_groups*n_controls)
+    }
+    else {
+      bvec = c(bvec, total_groups)
+    }
+    
   }
   
   # Upper bounds, ub
@@ -197,10 +208,15 @@
   #! Part 3: moments
   #! Part 4: K-S
   if (approximate == 1 | n_controls == 1) {
-    sense = c(rep("L", n_t), rep("L", n_c), rep("L", 2*n_mom_covs), rep("L", 2*n_ks_covs*max_ks_n_grid))
+    sense = c(rep("L", n_t), rep("L", n_c), rep("L", 2*n_mom_covs*(is.null(mom_targets))), rep("L", 2*n_ks_covs*max_ks_n_grid))
   }
   else {
-    sense = c(rep("E", n_t), rep("L", n_c), rep("L", 2*n_mom_covs), rep("L", 2*n_ks_covs*max_ks_n_grid))
+    sense = c(rep("E", n_t), rep("L", n_c), rep("L", 2*n_mom_covs*(is.null(mom_targets))), rep("L", 2*n_ks_covs*max_ks_n_grid))
+  }
+  
+  #! Part 3b: Target
+  if (!is.null(mom_covs) & !is.null(mom_targets)) {
+    sense = c(sense, rep("L", 4*n_mom_covs))
   }
   
   #! Part 5: exact
@@ -255,8 +271,8 @@
     sense = c(sense, "E") 
   }
   
-  #! Part 12: total_pairs
-  if (!is.null(total_pairs)) {
+  #! Part 12: total_groups
+  if (!is.null(total_groups)) {
     sense = c(sense, "E")
   }
   
@@ -281,7 +297,7 @@
   #! Part 9: far
   #! Part 10: near
   #! Part 11: use controls
-  #! Part 12: total_pairs
+  #! Part 12: total_groups
   
   # c_index
   c_index = rep(1:n_c, n_t)	

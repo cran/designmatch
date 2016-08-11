@@ -11,9 +11,11 @@ nmatch = function(dist_mat, subset_weight = NULL, total_pairs = NULL,
   if (is.null(mom)) {
     mom_covs = NULL
     mom_tols = NULL
+    mom_targets = NULL
   } else {
     mom_covs = mom$covs
     mom_tols = mom$tols
+    mom_targets = mom$targets
   }
   
   if (is.null(exact)) {
@@ -127,7 +129,10 @@ nmatch = function(dist_mat, subset_weight = NULL, total_pairs = NULL,
   vals_near_fine = NULL
   rows_n = NULL
   cols_n = NULL
-  vals_n = NULL		
+  vals_n = NULL
+  rows_target = NULL
+  cols_target = NULL
+  vals_target = NULL
   
   #! Nonbipartite matching constraints
   rows_nbm = sort(rep(1:n_tot, n_tot-1))
@@ -327,7 +332,7 @@ nmatch = function(dist_mat, subset_weight = NULL, total_pairs = NULL,
   #}
   
   #! Moment constraints
-  if (!is.null(mom_covs)) {
+  if (!is.null(mom_covs) & is.null(mom_targets)) {
     rows_mom_1 = NA
     cols_mom_1 = NA
     vals_mom_1 = NA
@@ -364,6 +369,24 @@ nmatch = function(dist_mat, subset_weight = NULL, total_pairs = NULL,
     cols_mom = c(cols_mom_1, cols_mom_2)
     vals_mom = c(vals_mom_1, vals_mom_2)
     row_count = max(rows_mom)
+  }
+  
+  #! Moment Constraints Target
+  if (!is.null(mom_covs) & !is.null(mom_targets)) {
+    n_covs_m = ncol(mom_covs)
+    rows_target = sort(rep(1:(4*n_covs_m)+row_count, n_dec))
+    for (i in 1:n_covs_m) {
+      cov_m = mom_covs[, i]
+      cols_target = c(cols_target, rep(1:n_dec, 4))
+      i_ind = rep(1:(n_tot-1), (n_tot-1):1)
+      aux = matrix(rep(1:n_tot, n_tot), nrow = n_tot, byrow = F)
+      j_ind = aux[lower.tri(aux)]
+      vals_target = c(vals_target, cov_m[i_ind] - (mom_targets[i] + mom_tols[i]),
+                      -1*cov_m[i_ind] + (mom_targets[i] - mom_tols[i]),
+                      cov_m[j_ind] - (mom_targets[i] + mom_tols[i]),
+                      -1*cov_m[j_ind] + (mom_targets[i] - mom_tols[i]))
+    }
+    row_count = max(rows_target)
   }
   
   #! Exact matching constraints
@@ -471,12 +494,12 @@ nmatch = function(dist_mat, subset_weight = NULL, total_pairs = NULL,
   }				
   
   #! Put together
-  rows = c(rows_nbm, rows_far, rows_near, 
-           rows_mom, rows_exact, rows_near_exact, rows_fine, rows_near_fine, rows_n)
-  cols = c(cols_nbm, cols_far, cols_near, 
-           cols_mom, cols_exact, cols_near_exact, cols_fine, cols_near_fine, cols_n)
-  vals = c(vals_nbm, vals_far, vals_near, 
-           vals_mom, vals_exact, vals_near_exact, vals_fine, vals_near_fine, vals_n)
+  rows = c(rows_nbm, rows_far, rows_near, rows_mom,
+           rows_target, rows_exact, rows_near_exact, rows_fine, rows_near_fine, rows_n)
+  cols = c(cols_nbm, cols_far, cols_near, cols_mom, 
+           cols_target, cols_exact, cols_near_exact, cols_fine, cols_near_fine, cols_n)
+  vals = c(vals_nbm, vals_far, vals_near, vals_mom, 
+           vals_target, vals_exact, vals_near_exact, vals_fine, vals_near_fine, vals_n)
   aux = cbind(rows, cols, vals)[order(cols), ]
   cnstrn_mat = simple_triplet_matrix(i = aux[, 1], j = aux[, 2], v = aux[, 3])
   Amat = cnstrn_mat
@@ -514,6 +537,9 @@ nmatch = function(dist_mat, subset_weight = NULL, total_pairs = NULL,
   }
   
   bvec = c(bvec, rep(0, length(table(rows_mom))))
+  
+  bvec = c(bvec, rep(0, length(table(rows_target))))
+  
   if (!is.null(exact_covs)) {
     bvec = c(bvec, rep(0, ncol(exact_covs)))
   }
@@ -570,6 +596,9 @@ nmatch = function(dist_mat, subset_weight = NULL, total_pairs = NULL,
   }
   
   sense = c(sense, rep("L", length(table(rows_mom))))
+  
+  sense = c(sense, rep("L", length(table(rows_target))))
+  
   if (!is.null(exact_covs)) {
     sense = c(sense, rep("E", ncol(exact_covs)))
   }
@@ -621,7 +650,7 @@ nmatch = function(dist_mat, subset_weight = NULL, total_pairs = NULL,
         cat(format("  Optimal matches found"), "\n")
         
         if (approximate == 1) {
-          rel = .relaxation_n(n_tot, out$xopt, dist_mat, subset_weight, "cplex")
+          rel = .relaxation_n(n_tot, out$xopt, dist_mat, subset_weight, "cplex", round_cplex, trace)
           out$xopt = rel$sol
           out$obj = rel$obj
           time = time + rel$time
@@ -693,7 +722,7 @@ nmatch = function(dist_mat, subset_weight = NULL, total_pairs = NULL,
         }
         
         if (approximate == 1) {
-          rel = .relaxation_n(n_tot, out$x, dist_mat, subset_weight, "gurobi")
+          rel = .relaxation_n(n_tot, out$x, dist_mat, subset_weight, "gurobi", round_cplex, trace)
           out$x = rel$sol
           out$objval = rel$obj
           time = time + rel$time
@@ -751,7 +780,7 @@ nmatch = function(dist_mat, subset_weight = NULL, total_pairs = NULL,
       cat(format("  Optimal matches found"), "\n")
       
       if (approximate == 1) {
-        rel = .relaxation_n(n_tot, out$solution, dist_mat, subset_weight, "glpk")
+        rel = .relaxation_n(n_tot, out$solution, dist_mat, subset_weight, "glpk", round_cplex, trace)
         out$solution = rel$sol
         out$optimum = rel$obj
         time = time + rel$time

@@ -5,12 +5,12 @@
 \title{Optimal bipartite matching in observational studies}
 
 \description{
-	Function for optimal bipartite matching in observational studies that directly balances the observed covariates.  \code{bmatch} allows the user to enforce different forms of covariate balance in the matched samples such as moment balance (e.g., of means, variances and correlations), distributional balance (e.g., fine balance, near-fine balance, strength-\emph{k} balancing) and exact matching.  In observational studies where an instrumental variable is available, \code{bmatch} can be used to handle weak instruments and strengthen them by means of the \code{far} options (see Yang et al. 2014 for an example). \code{bmatch} can also be used in discontinuity designs by matching units in a neighborhood of the discontinuity (see Keele et al. 2015 for details).  In any of these settings, \code{bmatch} either minimizes the total sum of covariate distances between matched units, maximizes the total number of matched units, or optimizes a combination of the two, subject to matching and covariate balancing constraints (see the examples below).
+	Function for optimal bipartite matching in observational studies that directly balances the observed covariates.  \code{bmatch} allows the user to enforce different forms of covariate balance in the matched samples such as moment balance (e.g., of means, variances and correlations), distributional balance (e.g., fine balance, near-fine balance, strength-\emph{k} balancing) and exact matching.  In observational studies where an instrumental variable is available, \code{bmatch} can be used to handle weak instruments and strengthen them by means of the \code{far} options (see Yang et al. 2014 for an example). \code{bmatch} can also be used in discontinuity designs by matching units in a neighborhood of the discontinuity (see Keele et al. 2015 for details).  In any of these settings, \code{bmatch} either minimizes the total sum of covariate distances between matched units, maximizes the total number of matched units, or optimizes a combination of the two, subject to matching, covariate balancing, and representativeness constraints (see the examples below).
 }
 
 \usage{
 	bmatch(t_ind, dist_mat = NULL, subset_weight = NULL, n_controls = 1,
-	       total_pairs = NULL, mom = NULL, ks = NULL, exact = NULL, 
+	       total_groups = NULL, mom = NULL, ks = NULL, exact = NULL, 
 	       near_exact = NULL, fine = NULL, near_fine = NULL, near = NULL, 
 	       far = NULL, solver = NULL)
 }
@@ -29,64 +29,64 @@
 
 \item{n_controls}{number of controls: a scalar defining the number of controls to be matched with a fixed rate to each treated unit.  The default is \code{n_controls = 1}, i.e. pair matching.}
 
-\item{total_pairs}{total number of matched pairs: a scalar specifying the number of matched pairs to be obtained.  If \code{total_pairs = NULL} then no specific number of matched pairs is required before matching.}
+\item{total_groups}{total number of matched pairs: a scalar specifying the number of matched pairs to be obtained.  If \code{total_groups = NULL}, then no specific number of matched pairs is required before matching.}
 
-\item{mom}{moment balance parameters: a list with two objects,
+\item{mom}{moment balance parameters: a list with three arguments, 
 
-\code{mom = list(mom_covs, mom_tols)}.
+\code{mom = list(covs = mom_covs, tols = mom_tols, targets = mom_targets)}.
 
-\code{mom_covs} is a matrix where each column is a covariate whose mean is to be balanced.  \code{mom_tols} is a vector of tolerances for the maximum differences in means for the covariates in \code{mom_covs}.  Note that if \code{mom_covs} is specified, then \code{mom_tols} needs to be specified as well, and the length of \code{mom_tols} has to be equal to the number of columns of \code{mom_covs}.  Note that the columns of \code{mom_covs} can be transformations of the original covariates to balance higher order single-dimensional moments like variances and skewnesses, and multidimensional moments such as correlations (Zubizarreta 2012).}
+\code{mom_covs} is a matrix where each column is a covariate whose mean is to be balanced.  \code{mom_tols} is a vector of tolerances for the maximum difference in means for the covariates in \code{mom_covs}.  \code{mom_targets} is a vector of target moments (e.g., means) of a distribution to be approximated by matched sampling.  \code{mom_targets} is optional, but if \code{mom_covs} is specified then \code{mom_tols} needs to be specified too.  If \code{mom_targets} is \code{NULL}, then \code{bmatch} will match treated and control units so that covariates in \code{mom_covs} differ at most by \code{mom_tols}.  If \code{mom_targets} is specified, then \code{bmatch} will match treated and control units so that each matched group differs at most by \code{mom_tols} units from the respective moments in \code{mom_targets}.  As a result, the matched groups will differ at most \code{mom_tols * 2} from each other.  Under certain assumptions, \code{mom_targets} can be used for constructing a representative matched sample.  The lengths of \code{mom_tols} and \code{mom_target} have to be equal to the number of columns of \code{mom_covs}.  Note that the columns of \code{mom_covs} can be transformations of the original covariates to balance higher order single-dimensional moments like variances and skewness, and multidimensional moments such as correlations (Zubizarreta 2012).}
 
 \item{ks}{Kolmogorov-Smirnov balance parameters: a list with three objects, 
 
-\code{ks = list(ks_covs, ks_n_grid = 10, ks_tols)}.  
+\code{ks = list(covs = ks_covs, n_grid = ks_n_grid, tols = ks_tols)}.  
 
 \code{ks_covs} is a matrix where each column is a covariate whose difference in a coarsened version of the Kolmogorov-Smirnov statistic between treated units and matched controls is to be constrained.  \code{ks_n_grid} is  scalar defining the number of equispaced grid points for calculating the Kolmogorov-Smirnov statistic between the distributions of the treated units and matched controls for the covariates in \code{ks_covs}.  The defaul is \code{ks_n_grid = 10} for the deciles of the empirical cumulative distribution functions of the treated units for the covariate in question.  \code{ks_tols} is a vector of tolerances for the maximum differences in means for the covariates defined in \code{ks_covs}.  Note that the length of \code{ks_tols} has to be equal to the number of columns of \code{ks_covs}.}
 
 \item{exact}{Exact matching parameters: a list with one argument, 
 
-\code{exact = list(exact_covs)}, 
+\code{exact = list(covs = exact_covs)}, 
 
 where \code{exact_covs} is a matrix where each column is a nominal covariate for exact matching.}
 
 \item{near_exact}{Near-exact matching parameters: a list with two objects, 
 
-\code{near_exact = list(near_exact_covs, near_exact_devs)}. 
+\code{near_exact = list(covs = near_exact_covs, devs = near_exact_devs)}. 
 
 \code{near_exact_covs} are the near-exact matching covariates; specifically, a matrix where each column is a nominal covariate for near-exact matching.  \code{near_exact_devs} are the maximum deviations from near-exact matching: a vector of scalars defining the maximum deviation allowed from exact matching for the covariates defined in \code{near_exact_covs}.  Note that the length of \code{near_exact_devs} has to be equal to the number of columns of \code{near_exact_covs}.  For detailed expositions of near-exact matching, see section 9.2 of Rosenbaum (2010) and Zubizarreta et al. (2011).}
 
 \item{fine}{Fine balance parameters: a list with one argument, 
 
-\code{fine = list(fine_covs)}, 
+\code{fine = list(covs = fine_covs)}, 
 
 where \code{fine_covs} is a matrix where each column is a nominal covariate for fine balance.  Fine balance enforces exact distributional balance on nominal covariates, but without constraining treated and control units to be matched within each category of each nominal covariate as in exact matching.  See chapter 10 of Rosenbaum (2010) for details.}
 
 \item{near_fine}{Near-fine balance parameters: a list with two objects, 
 
-\code{near_fine = list(near_fine_covs, near_fine_devs)}.
+\code{near_fine = list(covs = near_fine_covs, devs = near_fine_devs)}.
 
 \code{near_fine_covs} is a matrix where each column is a nominal covariate for near-fine matching. \code{near_fine_devs} is a vector of scalars defining the maximum deviation allowed from fine balance for the covariates in \code{near_fine_covs}.  Note that the length of \code{near_fine_devs} has to be equal to the number of columns of \code{near_fine_covs}.  See Yang et al. (2012) for a description of near-fine balance.}
 
 \item{near}{Near matching parameters: a list with three objects, 
 
-\code{near = list(near_covs, near_pairs, near_groups)}.
+\code{near = list(covs = near_covs, pairs = near_pairs, groups = near_groups)}.
 
 \code{near_covs} is a matrix where each column is a variable for near matching.  \code{near_pairs} is a vector determining the maximum distance between individual matched pairs for each variable in \code{near_covs}.  \code{near_groups} is a vector determining the maximum average distance between matched groups (in aggregate) for each covariate in \code{near_covs}.  If \code{near_covs} is specified, then either \code{near_pairs}, \code{near_covs} or both must be specified as well, and the length of \code{near_pairs} and/or \code{near_groups} has to be equal to the number of columns of \code{near_covs}.  The \code{near} options can be useful for matching within a window of a discontinuity (see Keele et al. 2015 for details).
 }
 
 \item{far}{Far matching parameters: a list with three objects, 
 
-\code{far = list(far_covs, far_pairs, far_groups)}.  
+\code{far = list(covs = far_covs, pairs = far_pairs, groups = far_groups)}.  
 
 \code{far_covs} is a matrix where each column is a variable (a covariate or an instrumental variable) for far matching.  \code{far_pairs} is a vector determining the minimum distance between units in a matched pair for each variable in \code{far_covs}, and \code{far_groups} is a vector defining the minimum average (aggregate) distance between matched groups for each variable in \code{far_covs}.  If \code{far_covs} is specified, then either \code{far_pairs}, \code{far_covs}, or both, must be specified, and the length of \code{far_pairs} and/or \code{far_groups} has to be equal to the number of columns of \code{far_covs}.  See Yang et al. (2014) for strengthening an instrumental variable via far matching in a bipartite setting.}
 
 \item{solver}{
 Optimization solver parameters: a list with four objects, 
 
-\code{solver = list(name, t_max, approximate = 1, round_cplex = 0,}\cr
+\code{solver = list(name = name, t_max = t_max, approximate = 1, round_cplex = 0,}\cr
 \code{    trace_cplex = 0)}.
 
-\code{solver} is a string that determines the optimization solver to be used.  The options are: \code{cplex}, \code{glpk}, \code{gurobi} and \code{symphony}.  The default solver is \code{glpk} with \code{approximate = 1}, so that by default an approximate solution is found (see \code{approximate} below).  For an exact solution, we strongly recommend using \code{cplex} or \code{gurobi} as they are much faster than the other solvers, but they do require a license (free for academics, but not for people outside universities).  Between \code{cplex} and \code{gurobi}, note that the installation of the \code{gurobi} interface for R is much simpler.
+\code{solver} is a string that determines the optimization solver to be used.  The options are: \code{cplex}, \code{glpk}, \code{gurobi} and \code{symphony}.  The default solver is \code{glpk} with \code{approximate = 1}, so that by default an approximate solution is found (see \code{approximate} below).  For an exact solution, we strongly recommend using \code{cplex} or \code{gurobi} as they are much faster than the other solvers, but they do require a license (free for academics, but not for people outside universities).  Between \code{cplex} and \code{gurobi}, note that installing the R interface for \code{gurobi} is much simpler.
 
 \code{t_max} is a scalar with the maximum time limit for finding the matches.  This option is specific to \code{cplex} and \code{gurobi}.  If the optimal matches are not found within this time limit, a partial, suboptimal solution is given.  
 	
@@ -233,7 +233,7 @@ table(exact_covs[t_id]==exact_covs[c_id])
 #subset_weight = NULL
 
 ## Total pairs to be matched
-#total_pairs = sum(t_ind)
+#total_groups = sum(t_ind)
 
 ## Solver options
 #t_max = 60*5
@@ -243,7 +243,7 @@ table(exact_covs[t_id]==exact_covs[c_id])
 #round_cplex = 0, trace_cplex = 0)
 
 ## Match                   
-#out = bmatch(t_ind = t_ind, dist_mat = dist_mat, total_pairs = total_pairs, 
+#out = bmatch(t_ind = t_ind, dist_mat = dist_mat, total_groups = total_groups, 
 #solver = solver)              
               
 ## Indices of the treated units and matched controls

@@ -1,6 +1,6 @@
 #! Builds the constraint matrix
-.constraintmatrix = function(t_ind, n_controls, total_pairs,
-                            mom_covs, mom_tols,
+.constraintmatrix = function(t_ind, n_controls, total_groups,
+                            mom_covs, mom_tols, mom_targets,
                             ks_covs, ks_covs_aux, ks_n_grid, ks_tols,
                             exact_covs,
                             near_exact_covs, near_exact_devs,
@@ -40,11 +40,11 @@
   
   #! Parts 3 and 4: moments and K-S
   mom_ks_covs = NULL
-  if (!is.null(mom_covs) | !is.null(ks_covs)) {
+  if ((!is.null(mom_covs) & is.null(mom_targets)) | !is.null(ks_covs)) {
     row_ind_3.4 = 0
     #! Number of moment covariates
     n_mom_covs = 0
-    if(!is.null(mom_covs)) {
+    if(!is.null(mom_covs) & is.null(mom_targets)) {
       n_mom_covs = ncol(mom_covs)
     }
     #! Number of K-S covariates
@@ -53,11 +53,11 @@
       n_ks_covs = ncol(ks_covs)
     }
     # Bind moment and K-S covariates		
-    if(!is.null(mom_covs) & is.null(ks_covs_aux)) {
+    if(!is.null(mom_covs) & is.null(mom_targets) & is.null(ks_covs_aux)) {
       mom_ks_covs = mom_covs
       mom_ks_tols = mom_tols
     }
-    if(is.null(mom_covs) & !is.null(ks_covs_aux)) {
+    if((is.null(mom_covs) & is.null(mom_targets)) & !is.null(ks_covs_aux)) {
       mom_ks_covs = ks_covs_aux
       mom_ks_tols = NA
       for (i in 1:ncol(ks_covs)) {
@@ -65,7 +65,7 @@
       }
       mom_ks_tols = mom_ks_tols[-1]
     }
-    if(!is.null(mom_covs) & !is.null(ks_covs_aux)) {
+    if((!is.null(mom_covs) & is.null(mom_targets)) & !is.null(ks_covs_aux)) {
       mom_ks_covs = cbind(mom_covs, ks_covs_aux)
       mom_ks_tols = mom_tols
       for (i in 1:ncol(ks_covs)) {
@@ -75,7 +75,7 @@
   }					 
   if (!is.null(mom_ks_covs)) {
     n_mom_ks_covs = ncol(mom_ks_covs)
-    if (!is.null(mom_tols) | !is.null(ks_tols)) {
+    if ((!is.null(mom_tols) & is.null(mom_targets)) | !is.null(ks_tols)) {
       row_ind_3.4 = sort(rep(1:(2*n_mom_ks_covs)+n_t+n_c, n_tot))
     }	
     col_ind_3.4 = NA
@@ -84,12 +84,12 @@
     k = 0
     for (i in 1:n_mom_ks_covs) {
       if (n_mom_covs != 0 & i <= n_mom_covs) {
-        if (!is.null(mom_tols) | !is.null(ks_tols)) {
+        if ((!is.null(mom_tols) & is.null(mom_targets)) | !is.null(ks_tols)) {
           col_ind_3.4 = c(col_ind_3.4, rep(1:n_tot, 2))
         }
       }
       if (n_ks_covs != 0 & i > n_mom_covs) {
-        if (!is.null(mom_tols) | !is.null(ks_tols)) {
+        if ((!is.null(mom_tols) & is.null(mom_targets)) | !is.null(ks_tols)) {
           col_ind_3.4 = c(col_ind_3.4, rep(1:n_tot, 2))
           k = k+1
           if (k >= max(ks_n_grid)) {
@@ -99,7 +99,7 @@
         }
       }
       temp_mean_1 = rep(mom_ks_covs[t_ind==0, i], n_t)-(mom_ks_covs[t_ind==1, i])[sort(rep(1:n_t, n_c))]
-      if (!is.null(mom_tols) | !is.null(ks_tols)) {
+      if ((!is.null(mom_tols) & is.null(mom_targets)) | !is.null(ks_tols)) {
         temp_mean_2 = temp_mean_1-(mom_ks_tols[i]*rep(1, n_t*n_c))
         temp_mean_3 = -temp_mean_1-(mom_ks_tols[i]*rep(1, n_t*n_c))
       }	
@@ -111,7 +111,27 @@
     }
     #! Current max row index
     row_ind_cur	= max(row_ind_3.4)
-  }	
+  }
+  
+  #! Moment target part
+  rows_target = NULL
+  cols_target = NULL
+  vals_target = NULL
+  if (!is.null(mom_covs) & !is.null(mom_targets)) {
+    n_mom_covs = ncol(mom_covs)
+    rows_target = sort(rep(1:(4*n_mom_covs)+row_ind_cur, n_tot))
+    
+    for (i in 1:n_mom_covs) {
+      cols_target = c(cols_target, rep(1:n_tot, 4))
+      temp_treatment_1 = (mom_covs[t_ind==1, i])[sort(rep(1:n_t, n_c))] - (mom_targets[i] + mom_tols[i])
+      temp_treatment_2 = -1*(mom_covs[t_ind==1, i])[sort(rep(1:n_t, n_c))] + (mom_targets[i] - mom_tols[i])
+      temp_control_1 = rep(mom_covs[t_ind==0, i], n_t) - (mom_targets[i] + mom_tols[i])
+      temp_control_2 = -1*rep(mom_covs[t_ind==0, i], n_t) + (mom_targets[i] - mom_tols[i])
+      vals_target = c(vals_target, temp_treatment_1, temp_treatment_2, temp_control_1, temp_control_2)
+    }
+    row_ind_cur = max(rows_target)
+  }
+  
   
   #! Part 5: exact
   rows_exact = NULL
@@ -350,8 +370,8 @@
     row_ind_cur = max(row_ind_11)
   }
   
-  # Part 12: total_pairs
-  if (!is.null(total_pairs)) {
+  # Part 12: total_groups
+  if (!is.null(total_groups)) {
     row_ind_12 = rep(row_ind_cur+1, n_t*n_c)
     col_ind_12 = 1:(n_t*n_c)
     ones_12 = rep(1, n_t*n_c)
@@ -369,6 +389,12 @@
     row_ind = c(row_ind, row_ind_3.4)
     col_ind = c(col_ind, col_ind_3.4)
     vals = c(vals, mom_ks_vals_3.4)
+  }
+  #! Part 3b
+  if (!is.null(mom_covs) & !is.null(mom_targets)) {
+    row_ind = c(row_ind, rows_target)
+    col_ind = c(col_ind, cols_target)
+    vals = c(vals, vals_target)
   }
   #! Part 5
   if (!is.null(exact_covs)) {
@@ -413,7 +439,7 @@
     vals = c(vals, use_controls_vals_11)	
   }
   #! Part 12
-  if (!is.null(total_pairs)) {
+  if (!is.null(total_groups)) {
     row_ind = c(row_ind, row_ind_12)
     col_ind = c(col_ind, col_ind_12)
     vals = c(vals, ones_12)

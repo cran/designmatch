@@ -1,5 +1,5 @@
 # Solves relaxation problem
-.relaxation_b = function(n_t, n_c, coef, dist_mat, subset_weight, solver) {
+.relaxation_b = function(n_t, n_c, coef, dist_mat, subset_weight, solver, round_cplex, trace) {
   
   n_tot = n_t*n_c
   #! Part 1
@@ -39,7 +39,7 @@
     if (requireNamespace('Rcplex', quietly = TRUE)) {
       ptm = proc.time()
       out = Rcplex::Rcplex(cvec, Amat, bvec, ub = ub, sense = sense, vtype = vtype, n = 1,
-                           control = list(trace = 0, round = 1), objsense = "max")
+                           control = list(trace = trace, round = round_cplex), objsense = "max")
       time = (proc.time()-ptm)[3]
       
       if (out$status==108) {
@@ -78,8 +78,9 @@
       model$ub = ub
       model$modelsense = "max"
       
+      params = list(OutputFlag = trace)
       ptm = proc.time()
-      out = gurobi::gurobi(model)
+      out = gurobi::gurobi(model, params)
       time = (proc.time()-ptm)[3]
       
       if (out$status == "INFEASIBLE") {
