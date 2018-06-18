@@ -20,25 +20,39 @@
     vals_mom = NULL
     n_mom_covs = ncol(mom_covs)
     k = 1
-    for (i in 1:n_mom_covs) {
-      #! Treated
-      rows_mom_plus = rep(row_ind_cur+k, n_t)
-      rows_mom_minus = rep(row_ind_cur+k+1, n_t)  
-      rows_mom = c(rows_mom, rows_mom_plus, rows_mom_minus)
-      cols_mom = c(cols_mom, rep(1:n_t, 2))
-      vals_plus = c(mom_covs[t_ind==1, i]-mom_targets[i]-mom_tols[i])
-      vals_minus = c(mom_covs[t_ind==1, i]-mom_targets[i]+mom_tols[i])
-      vals_mom = c(vals_mom, c(vals_plus, vals_minus)) 
-      #! Controls
-      rows_mom_plus = rep(row_ind_cur+k+2, n_c)
-      rows_mom_minus = rep(row_ind_cur+k+3, n_c)  
-      rows_mom = c(rows_mom, rows_mom_plus, rows_mom_minus)
-      cols_mom = c(cols_mom, rep(n_t+(1:n_c), 2))
-      vals_plus = c(mom_covs[t_ind==0, i]-mom_targets[i]-mom_tols[i])
-      vals_minus = c(mom_covs[t_ind==0, i]-mom_targets[i]+mom_tols[i])
-      vals_mom = c(vals_mom, c(vals_plus, vals_minus))       
-      k = k+4
+    if (!is.null(mom_targets)) {
+      for (i in 1:n_mom_covs) {
+        #! Treated
+        rows_mom_plus = rep(row_ind_cur+k, n_t)
+        rows_mom_minus = rep(row_ind_cur+k+1, n_t)  
+        rows_mom = c(rows_mom, rows_mom_plus, rows_mom_minus)
+        cols_mom = c(cols_mom, rep(1:n_t, 2))
+        vals_plus = c(mom_covs[t_ind==1, i]-mom_targets[i]-mom_tols[i])
+        vals_minus = c(mom_covs[t_ind==1, i]-mom_targets[i]+mom_tols[i])
+        vals_mom = c(vals_mom, c(vals_plus, vals_minus)) 
+        #! Controls
+        rows_mom_plus = rep(row_ind_cur+k+2, n_c)
+        rows_mom_minus = rep(row_ind_cur+k+3, n_c)  
+        rows_mom = c(rows_mom, rows_mom_plus, rows_mom_minus)
+        cols_mom = c(cols_mom, rep(n_t+(1:n_c), 2))
+        vals_plus = c(mom_covs[t_ind==0, i]-mom_targets[i]-mom_tols[i])
+        vals_minus = c(mom_covs[t_ind==0, i]-mom_targets[i]+mom_tols[i])
+        vals_mom = c(vals_mom, c(vals_plus, vals_minus))       
+        k = k+4
+      }
     }
+    if (is.null(mom_targets)) {
+      for (i in 1:n_mom_covs) {
+        rows_mom_plus = rep(row_ind_cur+k, n_t+n_c)
+        rows_mom_minus = rep(row_ind_cur+k+1, n_t+n_c)  
+        rows_mom = c(rows_mom, rows_mom_plus, rows_mom_minus)
+        cols_mom = c(cols_mom, rep(1:(n_t+n_c), 2))
+        vals_plus = c(mom_covs[t_ind==1, i]-mom_tols[i], -mom_covs[t_ind==0, i])
+        vals_minus = c(mom_covs[t_ind==1, i]+mom_tols[i], -mom_covs[t_ind==0, i])
+        vals_mom = c(vals_mom, c(vals_plus, vals_minus))     
+        k = k+2
+      }
+    }    
     row_ind_cur = max(rows_mom)
   }
   #! Fine balance    
@@ -113,8 +127,14 @@
   sense = NULL
   #! Mom balance
   if (!is.null(mom_covs)) {
-  	sense_covs = rep(c("L", "G", "L", "G"), length(unique(rows_mom))/4)
-    sense = c(sense, sense_covs) 
+  	if (!is.null(mom_targets)) {
+  	  sense_covs = rep(c("L", "G", "L", "G"), length(unique(rows_mom))/4)
+      sense = c(sense, sense_covs)
+    }   	
+  	if (is.null(mom_targets)) {
+  	  sense_covs = rep(c("L", "G"), length(unique(rows_mom))/2)
+      sense = c(sense, sense_covs)
+    } 
   }
   #! Fine balance
   if (!is.null(fine_covs)) {

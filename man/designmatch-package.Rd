@@ -18,9 +18,9 @@ License: \tab GPL-2 | GPL-3\cr
 }
 }
 \author{
-	Jose R. Zubizarreta <zubizarreta@columbia.edu>, Cinar Kilcioglu <ckilcioglu16@gsb.columbia.edu>.
+	Jose R. Zubizarreta <zubizarreta@hcp.med.harvard.edu>, Cinar Kilcioglu <ckilcioglu16@gsb.columbia.edu>.
 
-Maintainer: Jose R. Zubizarreta <zubizarreta@columbia.edu>, Cinar Kilcioglu <ckilcioglu16@gsb.columbia.edu>.
+Maintainer: Jose R. Zubizarreta <zubizarreta@hcp.med.harvard.edu>, Cinar Kilcioglu <ckilcioglu16@gsb.columbia.edu>.
 }
 \references{
 	Greevy, R., Lu, B., Silber, J. H., and Rosenbaum, P. R. (2004), "Optimal Multivariate

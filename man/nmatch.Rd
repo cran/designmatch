@@ -124,7 +124,7 @@ tional studies," \emph{Journal of Computational and Graphical Statistics}, 21, 5
 }
 
 \author{
-	Jose R. Zubizarreta <zubizarreta@columbia.edu>, Cinar Kilcioglu <ckilcioglu16@gsb.columbia.edu>.
+	Jose R. Zubizarreta <zubizarreta@hcp.med.harvard.edu>, Cinar Kilcioglu <ckilcioglu16@gsb.columbia.edu>.
 }
 
 %\seealso{

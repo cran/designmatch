@@ -17,7 +17,7 @@
 
 \arguments{
 
-\item{t_ind}{treatment indicator: a vector of zeros and ones indicating treatment (1 = treated; 0 = control).}
+\item{t_ind}{treatment indicator: a vector of zeros and ones indicating treatment (1 = treated; 0 = control).  Please note that the data needs to be sorted in decreasing order according to this treatment indicator.}
 
 \item{dist_mat}{distance matrix: a matrix of positive distances between treated units (rows) and controls (columns).  If \code{dist_mat = NULL} and \code{subset_weight = 1}, then bmatch will solve the cardinality matching problem in Zubizarreta et al. (2014).}
 
@@ -134,7 +134,7 @@ tional studies," \emph{Journal of Computational and Graphical Statistics}, 21, 5
 }
 
 \author{
-	Jose R. Zubizarreta <zubizarreta@columbia.edu>, Cinar Kilcioglu <ckilcioglu16@gsb.columbia.edu>.
+	Jose R. Zubizarreta <zubizarreta@hcp.med.harvard.edu>, Cinar Kilcioglu <ckilcioglu16@gsb.columbia.edu>.
 }
 
 \seealso{
@@ -143,8 +143,9 @@ tional studies," \emph{Journal of Computational and Graphical Statistics}, 21, 5
 
 \examples{
 	
-# Load and attach data
+# Load, sort, and attach data
 data(lalonde)
+lalonde = lalonde[order(lalonde$treatment, decreasing = TRUE), ]
 attach(lalonde)
 
 ################################# 
@@ -156,8 +157,10 @@ attach(lalonde)
 # exact matching for different covariates. The solver used is glpk with the 
 # approximate option.
 
-# Treatment indicator
+# Treatment indicator; note that the data needs to be sorted in decreasing order
+# according to this treatment indicator
 t_ind = treatment
+t_ind 
 
 # Distance matrix
 dist_mat = NULL 

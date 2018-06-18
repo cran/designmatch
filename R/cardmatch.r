@@ -8,8 +8,13 @@ cardmatch = function(t_ind, mom = NULL, fine = NULL, solver = NULL) {
   } else {
     mom_covs = mom$covs
     mom_tols = mom$tols
-    mom_targets = mom$targets
-  }    
+    if (is.null(mom$targets)) {
+    	mom_targets = NULL
+    }
+    if (!is.null(mom$targets)) {
+    	mom_targets = mom$targets
+    }
+  }  
   if (is.null(fine)) {
     fine_covs = NULL
   } else {

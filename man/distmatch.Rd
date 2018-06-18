@@ -14,7 +14,7 @@
 
 \arguments{
 
-\item{t_ind}{treatment indicator: a vector of zeros and ones indicating treatment (1 = treated; 0 = control).}
+\item{t_ind}{treatment indicator: a vector of zeros and ones indicating treatment (1 = treated; 0 = control).  Please note that the data needs to be sorted in decreasing order according to this treatment indicator.}
 
 \item{dist_mat}{distance matrix: a matrix of positive distances between treated units (rows) and controls (columns).  If \code{dist_mat = NULL} and \code{subset_weight = 1}, then bmatch will solve the cardinality matching problem in Zubizarreta et al. (2014).}
 
@@ -58,7 +58,7 @@ Optimization solver parameters: a list with four objects,
 }
 
 \author{
-	Jose R. Zubizarreta <zubizarreta@columbia.edu>, Cinar Kilcioglu <ckilcioglu16@gsb.columbia.edu>.
+	Jose R. Zubizarreta <zubizarreta@hcp.med.harvard.edu>, Cinar Kilcioglu <ckilcioglu16@gsb.columbia.edu>.
 }
 
 \seealso{
@@ -67,8 +67,9 @@ Optimization solver parameters: a list with four objects,
 
 \examples{
 	
-# Load and attach data
+# Load, sort, and attach data
 data(lalonde)
+lalonde = lalonde[order(lalonde$treatment, decreasing = TRUE), ]
 attach(lalonde)
 
 ################################# 
@@ -92,8 +93,10 @@ education_5 = quantiles(education, 5)
 re74_5 = quantiles(re74, 5)
 re75_5 = quantiles(re75, 5)
 
-# Treatment indicator
+# Treatment indicator; note that the data needs to be sorted in decreasing order
+# according to this treatment indicator
 t_ind = treatment
+t_ind 
 
 # Fine balance
 fine_covs = cbind(black, hispanic, married, nodegree, age_5, education_5, re74_5, re75_5)
