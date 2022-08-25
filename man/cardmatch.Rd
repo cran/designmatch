@@ -20,7 +20,7 @@
 
 \code{mom = list(covs = mom_covs, tols = mom_tols, targets = mom_targets)}.
 
-\code{mom_covs} is a matrix where each column is a covariate whose mean is to be balanced.  \code{mom_tols} is a vector of tolerances for the maximum difference in means for the covariates in \code{mom_covs}.  \code{mom_targets} is a vector of target moments (e.g., means) of a distribution to be approximated by matched sampling.  \code{mom_targets} is optional, but if \code{mom_covs} is specified then \code{mom_tols} needs to be specified too.  If \code{mom_targets} is \code{NULL}, then \code{bmatch} will match treated and control units so that covariates in \code{mom_covs} differ at most by \code{mom_tols}.  If \code{mom_targets} is specified, then \code{bmatch} will match treated and control units so that each matched group differs at most by \code{mom_tols} units from the respective moments in \code{mom_targets}.  As a result, the matched groups will differ at most \code{mom_tols * 2} from each other.  Under certain assumptions, \code{mom_targets} can be used for constructing a representative matched sample.  The lengths of \code{mom_tols} and \code{mom_target} have to be equal to the number of columns of \code{mom_covs}.  Note that the columns of \code{mom_covs} can be transformations of the original covariates to balance higher order single-dimensional moments like variances and skewness, and multidimensional moments such as correlations (Zubizarreta 2012).}
+\code{mom_covs} is a matrix where each column is a covariate whose mean is to be balanced.  \code{mom_tols} is a vector of tolerances for the maximum difference in means for the covariates in \code{mom_covs}.  \code{mom_targets} is a vector of target moments (e.g., means) of a distribution to be approximated by matched sampling.  If \code{mom_targets} is specified, then \code{profmatch} will select units from each treatment group so that each matched group differs at most by \code{mom_tols} units from the respective moments in \code{mom_targets}.  As a result, the matched groups will differ at most \code{mom_tols * 2} from each other.  Under certain assumptions, \code{mom_targets} can be used for constructing a representative matched sample.  The lengths of \code{mom_tols} and \code{mom_target} have to be equal to the number of columns of \code{mom_covs}.  Note that the columns of \code{mom_covs} can be transformations of the original covariates to balance higher order single-dimensional moments like variances and skewness, and multidimensional moments such as correlations (Zubizarreta 2012).}
 
 \item{fine}{Fine balance parameters: a list with one argument, 
 
@@ -53,7 +53,7 @@ Optimization solver parameters: a list with four objects,
 	
 	\item{obj_dist_mat}{value of the total sum of distances term of the objective function at the optimum;}
 	
-	\item{t_id}{indexes of the matched controls at the optimum;}
+	\item{t_id}{indexes of the matched treated units at the optimum;}
 	
 	\item{c_id}{indexes of the matched controls at the optimum;}
 	

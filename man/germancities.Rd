@@ -14,7 +14,7 @@
 	The complete dataset is available at \url{http://www.aeaweb.org/articles.php?doi=10.1257/aer.98.5.1766}.
 } 
 
-\usage{germancities} 
+\usage{data(germancities)} 
 
 \format{A data frame with 122 observations corresponding to 20 treated and 102 control cities.  
 		The treatment assignment indicator is the first column of the data frame: treat (1 = treated; 0 = control).

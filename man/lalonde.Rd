@@ -7,10 +7,10 @@
 \title{Lalonde data set} 
 
 \description{
-	This is one of the data sets from the National Supported Work Demonstration used by Dehejia and Wahba (1999) to evaluate propensity score matching methods.  This and other related data sets are available at \url{http://users.nber.org/~rdehejia/data/nswdata2.html}.
+	This is one of the data sets from the National Supported Work Demonstration used by Dehejia and Wahba (1999) to evaluate propensity score matching methods.  This and other related data sets are available at \url{https://users.nber.org/~rdehejia/nswdata2.html}.
 } 
 
-\usage{lalonde} 
+\usage{data(lalonde)} 
 
 \format{A data frame with 445 observations, corresponding to 185 treated and 260 control subjects, and 10 variables.  
 		The treatment assignment indicator is the first variable of the data frame: \code{treatment} (1 = treated; 0 = control).
@@ -37,7 +37,7 @@
 		The last variable of the data frame is \code{re78}, the real the earnings in 1978.
 }
 
-\source{\url{http://users.nber.org/~rdehejia/data/nswdata2.html}} 
+\source{\url{https://users.nber.org/~rdehejia/nswdata2.html}} 
 
 \references{
 	Dehejia, R., and Wahba, S. (1999), "Causal Effects in Nonexperimental Studies: Reevaluating the Evaluation of Training Programs," \emph{Journal of the American Statistical Association}, 94, 1053-1062. 

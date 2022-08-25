@@ -44,7 +44,7 @@ Optimization solver parameters: a list with four objects,
 	
 	\item{obj_dist_mat}{value of the total sum of distances term of the objective function at the optimum;}
 	
-	\item{t_id}{indexes of the matched controls at the optimum;}
+	\item{t_id}{indexes of the matched treated units at the optimum;}
 	
 	\item{c_id}{indexes of the matched controls at the optimum;}
 	
