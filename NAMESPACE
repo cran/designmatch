@@ -1,14 +1,24 @@
-# Default NAMESPACE created by R
 # Remove the previous line if you edit this file
 
 # Export all names
-exportPattern(".")
+export(absstddif)
+export(bmatch)
+export(cardmatch)
+export(distmat)
+export(distmatch)
+export(ecdfplot)
+export(finetab)
+export(loveplot)
+export(meantab)
+export(nmatch)
+export(pairsplot)
+export(profmatch)
 
 # Import all packages listed as Imports or Depends
 import(
+  highs,
   lattice,
   MASS,
-  Rglpk,
   slam
 )
 

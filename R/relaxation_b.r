@@ -34,6 +34,58 @@
   
   #### SOLVER PART #######
   
+  if (solver == "highs"){
+    #library(highs)
+    cat(format("  HiGHS optimizer is open..."), "\n")
+    lhs = rep(-Inf, length(sense))
+    rhs = rep(Inf, length(sense))
+    lhs[sense == "G"] = bvec[sense == "G"]
+    rhs[sense == "L"] = bvec[sense == "L"]
+    lhs[sense == "E"] = bvec[sense == "E"]
+    rhs[sense == "E"] = bvec[sense == "E"]
+    
+    types = vtype
+    types[types=="B"] = "I"
+    
+    cat(format("  Finding the optimal matches..."), "\n")
+    ptm = proc.time()
+    out = highs_solve(L = cvec,
+                      lower = 0,
+                      upper = 1,
+                      A = Amat,
+                      lhs = lhs,
+                      rhs = rhs,
+                      types = types,
+                      maximum = TRUE)
+    time = (proc.time()-ptm)[3]
+    
+    if (out$status == 7 | out$status == 13){
+      if (out$status == 7){
+        cat(format("  Optimal matches found"), "\n")
+      }
+      else if (out$status == 13){
+        cat(format("  Time limit reached!"), "\n")
+      }
+      sol = out$primal_solution
+      if(is.null(dist_mat)) {
+        obj = sum(-1*(rep(1, n_tot)) * (round(sol, 1e-10)==1))
+      } else {
+        obj = sum((as.vector(matrix(t(dist_mat), nrow = 1, byrow = TRUE))-(subset_weight*rep(1, n_t*n_c)))*(round(sol, 1e-10)==1))
+      }
+    }
+    else if (out$status == 8) {
+      cat(format("  Error: problem infeasible!"), "\n")
+      obj = 0
+      sol = NULL
+    }
+    else{
+      outmessage = paste0("  Error: HiGHS solver message: ", out$status_message)
+      cat(format(outmessage), "\n")
+      obj = 0
+      sol = NULL
+    }
+  }
+  
   if (solver == "cplex"){
     #library(Rcplex)
     if (requireNamespace('Rcplex', quietly = TRUE)) {
@@ -137,31 +189,35 @@
   # GLPK
   if (solver == "glpk") {
     #library(Rglpk)
-    dir = rep(NA, length(sense))
-    dir[sense=="E"] = '=='
-    dir[sense=="L"] = '<='
-    dir[sense=="G"] = '>='
-    
-    bound = list(lower = list(ind=c(1:length(ub)), val=rep(0,length(ub))),
-                 upper = list(ind=c(1:length(ub)), val=ub))
-    
-    ptm = proc.time()
-    out= Rglpk_solve_LP(cvec, Amat, dir, bvec, bounds = bound, types = vtype, max = TRUE)
-    time = (proc.time()-ptm)[3]
-    
-    if (out$status!=0) {
-      cat(format("  Error: problem infeasible!"), "\n")
-      obj = 0
-      sol = NULL
-    } else {
-      sol = out$solution
-      if(is.null(dist_mat)) {
-        obj = sum(-1*(rep(1, n_tot)) * out$solution)
+    if (requireNamespace('Rglpk', quietly = TRUE)) {
+      dir = rep(NA, length(sense))
+      dir[sense=="E"] = '=='
+      dir[sense=="L"] = '<='
+      dir[sense=="G"] = '>='
+      
+      bound = list(lower = list(ind=c(1:length(ub)), val=rep(0,length(ub))),
+                   upper = list(ind=c(1:length(ub)), val=ub))
+      
+      ptm = proc.time()
+      out= Rglpk::Rglpk_solve_LP(cvec, Amat, dir, bvec, bounds = bound, types = vtype, max = TRUE)
+      time = (proc.time()-ptm)[3]
+      
+      if (out$status!=0) {
+        cat(format("  Error: problem infeasible!"), "\n")
+        obj = 0
+        sol = NULL
       } else {
-        obj = sum((as.vector(matrix(t(dist_mat), nrow = 1, byrow = TRUE))-(subset_weight*rep(1, n_t*n_c)))*out$solution)
+        sol = out$solution
+        if(is.null(dist_mat)) {
+          obj = sum(-1*(rep(1, n_tot)) * out$solution)
+        } else {
+          obj = sum((as.vector(matrix(t(dist_mat), nrow = 1, byrow = TRUE))-(subset_weight*rep(1, n_t*n_c)))*out$solution)
+        }
       }
     }
-    
+    else {
+      stop('suggested package not installed')
+    }
   }
   
   return(list(sol = sol, obj = obj, time = time))

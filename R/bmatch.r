@@ -1,15 +1,15 @@
 #! bmatch
 bmatch = function(t_ind, dist_mat = NULL, subset_weight = NULL, n_controls = 1, total_groups = NULL,
-                   mom = NULL,
-                   ks = NULL,
-                   exact = NULL,
-                   near_exact = NULL,
-                   fine = NULL,
-                   near_fine = NULL, 
-                   near = NULL,
-                   far = NULL,
-                   #use_controls = NULL,
-                   solver = NULL) {
+                  mom = NULL,
+                  ks = NULL,
+                  exact = NULL,
+                  near_exact = NULL,
+                  fine = NULL,
+                  near_fine = NULL, 
+                  near = NULL,
+                  far = NULL,
+                  #use_controls = NULL,
+                  solver = NULL) {
   
   use_controls = NULL
   
@@ -82,9 +82,9 @@ bmatch = function(t_ind, dist_mat = NULL, subset_weight = NULL, n_controls = 1, 
   }
   
   if (is.null(solver)) {
-    solver = 'glpk'
     t_max = 60 * 15
     approximate = 1
+    solver = "highs"
   } else {
     t_max = solver$t_max
     approximate = solver$approximate
@@ -104,16 +104,16 @@ bmatch = function(t_ind, dist_mat = NULL, subset_weight = NULL, n_controls = 1, 
   #! Generate the parameters
   cat(format("  Building the matching problem..."), "\n")
   prmtrs = .problemparameters(t_ind, dist_mat, subset_weight, n_controls, total_groups,
-                             mom_covs, mom_tols, mom_targets,
-                             ks_covs, ks_n_grid, ks_tols,
-                             exact_covs,
-                             near_exact_covs, near_exact_devs,
-                             fine_covs,
-                             near_fine_covs, near_fine_devs,
-                             near_covs, near_pairs, near_groups,
-                             far_covs, far_pairs, far_groups,
-                             use_controls,
-                             approximate)
+                              mom_covs, mom_tols, mom_targets,
+                              ks_covs, ks_n_grid, ks_tols,
+                              exact_covs,
+                              near_exact_covs, near_exact_devs,
+                              fine_covs,
+                              near_fine_covs, near_fine_devs,
+                              near_covs, near_pairs, near_groups,
+                              far_covs, far_pairs, far_groups,
+                              use_controls,
+                              approximate)
   n_t = prmtrs$n_t
   n_c = prmtrs$n_c
   
@@ -197,7 +197,7 @@ bmatch = function(t_ind, dist_mat = NULL, subset_weight = NULL, n_controls = 1, 
     } else {
       stop('Required solver not installed')
     }
-
+    
   }
   
   #! CPLEX
@@ -262,50 +262,117 @@ bmatch = function(t_ind, dist_mat = NULL, subset_weight = NULL, n_controls = 1, 
     } else {
       stop('Required solver not installed')
     }
-
+    
   }
   
   #! GLPK
   else if (solver == "glpk") {
     #library(Rglpk)
-    cat(format("  GLPK optimizer is open..."), "\n")
-    dir = rep(NA, length(prmtrs$sense))
-    dir[prmtrs$sense=="E"] = '=='
-    dir[prmtrs$sense=="L"] = '<='
-    dir[prmtrs$sense=="G"] = '>='
+    if (requireNamespace('Rglpk', quietly = TRUE)) {
+      cat(format("  GLPK optimizer is open..."), "\n")
+      dir = rep(NA, length(prmtrs$sense))
+      dir[prmtrs$sense=="E"] = '=='
+      dir[prmtrs$sense=="L"] = '<='
+      dir[prmtrs$sense=="G"] = '>='
+      
+      bound = list(lower = list(ind=c(1:length(ub)), val=rep(0,length(ub))),
+                   upper = list(ind=c(1:length(ub)), val=ub))
+      
+      cat(format("  Finding the optimal matches..."), "\n")
+      ptm = proc.time()
+      out= Rglpk::Rglpk_solve_LP(cvec, Amat, dir, bvec, bounds = bound, types = vtype, max = FALSE)
+      time = (proc.time()-ptm)[3]
+      
+      if (out$status!=0) {
+        cat(format("  Error: problem infeasible!"), "\n")
+        obj_total = NA
+        obj_dist_mat = NA
+        t_id = NA
+        c_id = NA
+        group_id = NA
+        time = NA
+      }
+      
+      if (out$status==0) {
+        cat(format("  Optimal matches found"), "\n")
+        
+        if (approximate == 1) {
+          rel = .relaxation_b(n_t, n_c, out$solution, dist_mat, subset_weight, "glpk", round_cplex, trace)
+          out$solution = rel$sol
+          out$optimum = rel$obj
+          time = time + rel$time
+        }
+        
+        
+        #! Matched controls indexes	
+        t_id = unique(sort(rep(1:n_t, n_c))[out$solution[1:(n_t*n_c)]==1])
+        c_id = (c_index+n_t)[out$solution[1:(n_t*n_c)]==1]	
+        
+        #! Group (or pair) identifier
+        group_id_t = 1:(length(t_id))
+        group_id_c = sort(rep(1:(length(t_id)), n_controls))
+        group_id = c(group_id_t, group_id_c)
+        
+        #! Optimal value of the objective function
+        obj_total = out$optimum
+        
+        if (!is.null(dist_mat)) {
+          obj_dist_mat = sum(c(as.vector(matrix(t(dist_mat), nrow = 1, byrow = TRUE)) * out$solution[1:(n_t*n_c)]==1))
+        } else {
+          obj_dist_mat = NULL
+        }
+        
+      }
+    }
+    else {
+      stop('Required solver not installed')
+    }
+  }
+  
+  
+  #! HiGHS
+  else if (solver == "highs"){
+    #library(highs)
+    cat(format("  HiGHS optimizer is open..."), "\n")
+    lhs = rep(-Inf, length(sense))
+    rhs = rep(Inf, length(sense))
+    lhs[sense == "G"] = bvec[sense == "G"]
+    rhs[sense == "L"] = bvec[sense == "L"]
+    lhs[sense == "E"] = bvec[sense == "E"]
+    rhs[sense == "E"] = bvec[sense == "E"]
     
-    bound = list(lower = list(ind=c(1:length(ub)), val=rep(0,length(ub))),
-                 upper = list(ind=c(1:length(ub)), val=ub))
+    types = vtype
+    types[types=="B"] = "I"
     
     cat(format("  Finding the optimal matches..."), "\n")
     ptm = proc.time()
-    out= Rglpk_solve_LP(cvec, Amat, dir, bvec, bounds = bound, types = vtype, max = FALSE)
+    out = highs_solve(L = cvec,
+                      lower = 0,
+                      upper = ub,
+                      A = Amat,
+                      lhs = lhs,
+                      rhs = rhs,
+                      types = types,
+                      control = (highs_control(time_limit = t_max)))
     time = (proc.time()-ptm)[3]
     
-    if (out$status!=0) {
-      cat(format("  Error: problem infeasible!"), "\n")
-      obj_total = NA
-      obj_dist_mat = NA
-      t_id = NA
-      c_id = NA
-      group_id = NA
-      time = NA
-    }
-    
-    if (out$status==0) {
-      cat(format("  Optimal matches found"), "\n")
-      
+    if (out$status == 7 | out$status == 13){
+      if (out$status == 7){
+        cat(format("  Optimal matches found"), "\n")
+      }
+      else if (out$status == 13){
+        cat(format("  Time limit reached!"), "\n")
+      }
       if (approximate == 1) {
-        rel = .relaxation_b(n_t, n_c, out$solution, dist_mat, subset_weight, "glpk", round_cplex, trace)
-        out$solution = rel$sol
-        out$optimum = rel$obj
+        rel = .relaxation_b(n_t, n_c, out$primal_solution, dist_mat, subset_weight, "highs", round_cplex, trace)
+        out$primal_solution = rel$sol
+        out$objval = rel$obj
         time = time + rel$time
       }
       
-      
-      #! Matched controls indexes	
-      t_id = unique(sort(rep(1:n_t, n_c))[out$solution[1:(n_t*n_c)]==1])
-      c_id = (c_index+n_t)[out$solution[1:(n_t*n_c)]==1]	
+      #! Matched units indexes
+      t_id = unique(sort(rep(1:n_t, n_c))[round(out$primal_solution[1:(n_t*n_c)], 1e-10)==1])
+      c_id = (c_index+n_t)[round(out$primal_solution[1:(n_t*n_c)], 1e-10)==1]
       
       #! Group (or pair) identifier
       group_id_t = 1:(length(t_id))
@@ -313,14 +380,26 @@ bmatch = function(t_ind, dist_mat = NULL, subset_weight = NULL, n_controls = 1, 
       group_id = c(group_id_t, group_id_c)
       
       #! Optimal value of the objective function
-      obj_total = out$optimum
+      obj_total = out$objval
       
       if (!is.null(dist_mat)) {
-        obj_dist_mat = sum(c(as.vector(matrix(t(dist_mat), nrow = 1, byrow = TRUE)) * out$solution[1:(n_t*n_c)]==1))
+        obj_dist_mat = sum(c(as.vector(matrix(t(dist_mat), nrow = 1, byrow = TRUE)) * round(out$primal_solution[1:(n_t*n_c)], 1e-10)==1))
       } else {
         obj_dist_mat = NULL
       }
-      
+    }
+    else if (out$status == 8) {
+      cat(format("  Error: problem infeasible!"), "\n")
+      obj_total = NA
+      id = NA
+      time = NA
+    }
+    else{
+      outmessage = paste0("  Error: HiGHS solver message: ", out$status_message)
+      cat(format(outmessage), "\n")
+      obj_total = NA
+      id = NA
+      time = NA
     }
   }
   
@@ -394,7 +473,7 @@ bmatch = function(t_ind, dist_mat = NULL, subset_weight = NULL, n_controls = 1, 
     } else {
       stop('Required solver not installed')
     }
-
+    
   }
   #! Output
   return(list(obj_total = obj_total, obj_dist_mat = obj_dist_mat, 

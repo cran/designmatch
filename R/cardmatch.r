@@ -22,9 +22,9 @@ cardmatch = function(t_ind, mom = NULL, fine = NULL, solver = NULL) {
   }
     
   if (is.null(solver)) {
-    solver = 'glpk'
     t_max = 60 * 15
     approximate = 1
+    solver = "highs"
   } else {
     t_max = solver$t_max
     approximate = solver$approximate
@@ -158,42 +158,117 @@ cardmatch = function(t_ind, mom = NULL, fine = NULL, solver = NULL) {
   #! GLPK
   else if (solver == "glpk") {
     #library(Rglpk)
-    cat(format("  GLPK optimizer is open..."), "\n")
-    dir = rep(NA, length(prmtrs$sense))
-    dir[prmtrs$sense=="E"] = '=='
-    dir[prmtrs$sense=="L"] = '<='
-    dir[prmtrs$sense=="G"] = '>='
+    if (requireNamespace('Rglpk', quietly = TRUE)) {
+      cat(format("  GLPK optimizer is open..."), "\n")
+      dir = rep(NA, length(prmtrs$sense))
+      dir[prmtrs$sense=="E"] = '=='
+      dir[prmtrs$sense=="L"] = '<='
+      dir[prmtrs$sense=="G"] = '>='
+      
+      cat(format("  Finding the optimal matches..."), "\n")
+      ptm = proc.time()
+      out= Rglpk::Rglpk_solve_LP(cvec, Amat, dir, bvec, types = vtype, max = TRUE)
+      time = (proc.time()-ptm)[3]
+      
+      if (out$status!=0) {
+        cat(format("  Error: problem infeasible!"), "\n")
+        obj_total = NA
+        obj_dist_mat = NA
+        t_id = NA
+        c_id = NA
+        group_id = NA
+        time = NA
+      }
+      
+      if (out$status==0) {
+        cat(format("  Optimal matches found"), "\n")
+        
+        #! Matched units indexes
+        t_id = (1:n_dec_vars)[t_ind==1 & out$solution==1]
+        c_id = (1:n_dec_vars)[t_ind==0 & out$solution==1]
+        
+        #! Group (or pair) identifier
+        group_id = c(1:(length(t_id)), 1:(length(c_id)))
+        
+        #! Optimal value of the objective function
+        obj_total = out$optimum
+        
+      }
+    }
+    else {
+      stop('Required solver not installed')
+    }
+  }
+  
+  
+  #! HiGHS
+  else if (solver == "highs"){
+    #library(highs)
+    cat(format("  HiGHS optimizer is open..."), "\n")
+    lhs = rep(-Inf, length(sense))
+    rhs = rep(Inf, length(sense))
+    lhs[sense == "G"] = bvec[sense == "G"]
+    rhs[sense == "L"] = bvec[sense == "L"]
+    lhs[sense == "E"] = bvec[sense == "E"]
+    rhs[sense == "E"] = bvec[sense == "E"]
+    
+    types = vtype
+    types[types=="B"] = "I"
     
     cat(format("  Finding the optimal matches..."), "\n")
     ptm = proc.time()
-    out= Rglpk_solve_LP(cvec, Amat, dir, bvec, types = vtype, max = TRUE)
+    out = highs_solve(L = cvec,
+                      lower = 0,
+                      upper = 1,
+                      A = Amat,
+                      lhs = lhs,
+                      rhs = rhs,
+                      types = types,
+                      maximum = TRUE,
+                      control = (highs_control(time_limit = t_max)))
     time = (proc.time()-ptm)[3]
     
-    if (out$status!=0) {
-      cat(format("  Error: problem infeasible!"), "\n")
-      obj_total = NA
-      obj_dist_mat = NA
-      t_id = NA
-      c_id = NA
-      group_id = NA
-      time = NA
-    }
-    
-    if (out$status==0) {
+    if (out$status == 7){
       cat(format("  Optimal matches found"), "\n")
       
       #! Matched units indexes
-      t_id = (1:n_dec_vars)[t_ind==1 & out$solution==1]
-      c_id = (1:n_dec_vars)[t_ind==0 & out$solution==1]
+      t_id = (1:n_dec_vars)[t_ind==1 & round(out$primal_solution, 1e-10)==1]
+      c_id = (1:n_dec_vars)[t_ind==0 & round(out$primal_solution, 1e-10)==1]
       
       #! Group (or pair) identifier
       group_id = c(1:(length(t_id)), 1:(length(c_id)))
       
       #! Optimal value of the objective function
-      obj_total = out$optimum
+      obj_total = out$objective_value   
+    }
+    else if (out$status == 8) {
+      cat(format("  Error: problem infeasible!"), "\n")
+      obj_total = NA
+      id = NA
+      time = NA
+    }
+    else if (out$status == 13) {
+      cat(format("  Time limit reached!"), "\n")
       
+      #! Matched units indexes
+      t_id = (1:n_dec_vars)[t_ind==1 & round(out$primal_solution, 1e-10)==1]
+      c_id = (1:n_dec_vars)[t_ind==0 & round(out$primal_solution, 1e-10)==1]
+      
+      #! Group (or pair) identifier
+      group_id = c(1:(length(t_id)), 1:(length(c_id)))
+      
+      #! Optimal value of the objective function
+      obj_total = out$objective_value   
+    }
+    else{
+      outmessage = paste0("  Error: HiGHS solver message: ", out$status_message)
+      cat(format(outmessage), "\n")
+      obj_total = NA
+      id = NA
+      time = NA
     }
   }
+  
   
   #! Symphony
   else {

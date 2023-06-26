@@ -104,6 +104,7 @@
   }    
   #! 
   aux = cbind(rows_ind, cols_ind, vals)[order(cols_ind), ]
+  aux = aux[(aux[, 3] != 0),]
   Amat = simple_triplet_matrix(i = aux[, 1], j = aux[, 2], v = aux[, 3])
         
   #! Constraint vector, bvec

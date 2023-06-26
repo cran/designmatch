@@ -446,6 +446,8 @@
   }
   
   aux = cbind(row_ind, col_ind, vals)[order(col_ind), ]
+  
+  aux = aux[(aux[, 3] != 0),]
   cnstrn_mat = simple_triplet_matrix(i = aux[, 1], j = aux[, 2], v = aux[, 3])
   
   #! Output  

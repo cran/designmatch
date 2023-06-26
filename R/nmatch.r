@@ -1,12 +1,12 @@
 nmatch = function(dist_mat, subset_weight = NULL, total_pairs = NULL,
-                    mom = NULL,
-                    exact = NULL,
-                    near_exact = NULL,
-                    fine = NULL,
-                    near_fine = NULL,
-                    near = NULL,
-                    far = NULL,
-                    solver = NULL) {
+                  mom = NULL,
+                  exact = NULL,
+                  near_exact = NULL,
+                  fine = NULL,
+                  near_fine = NULL,
+                  near = NULL,
+                  far = NULL,
+                  solver = NULL) {
   
   if (is.null(mom)) {
     mom_covs = NULL
@@ -67,9 +67,9 @@ nmatch = function(dist_mat, subset_weight = NULL, total_pairs = NULL,
   }
   
   if (is.null(solver)) {
-    solver = 'glpk'
     t_max = 60 * 15
     approximate = 1
+    solver = "highs"
   } else {
     t_max = solver$t_max
     approximate = solver$approximate
@@ -501,6 +501,7 @@ nmatch = function(dist_mat, subset_weight = NULL, total_pairs = NULL,
   vals = c(vals_nbm, vals_far, vals_near, vals_mom, 
            vals_target, vals_exact, vals_near_exact, vals_fine, vals_near_fine, vals_n)
   aux = cbind(rows, cols, vals)[order(cols), ]
+  aux = aux[(aux[, 3] != 0), ]
   cnstrn_mat = simple_triplet_matrix(i = aux[, 1], j = aux[, 2], v = aux[, 3])
   Amat = cnstrn_mat
   
@@ -680,6 +681,76 @@ nmatch = function(dist_mat, subset_weight = NULL, total_pairs = NULL,
     }
   }
   
+  if (solver == "highs"){
+    #library(highs)
+    cat(format("  HiGHS optimizer is open..."), "\n")
+    lhs = rep(-Inf, length(sense))
+    rhs = rep(Inf, length(sense))
+    lhs[sense == "G"] = bvec[sense == "G"]
+    rhs[sense == "L"] = bvec[sense == "L"]
+    lhs[sense == "E"] = bvec[sense == "E"]
+    rhs[sense == "E"] = bvec[sense == "E"]
+    
+    types = var_type
+    types[types=="B"] = "I"
+    
+    cat(format("  Finding the optimal matches..."), "\n")
+    ptm = proc.time()
+    out = highs_solve(L = cvec,
+                      lower = 0,
+                      upper = ub,
+                      A = Amat,
+                      lhs = lhs,
+                      rhs = rhs,
+                      types = types,
+                      control = (highs_control(time_limit = t_max)))
+    
+    time = (proc.time()-ptm)[3]
+    if (out$status == 8) {
+      cat(format("  Error: problem infeasible!"), "\n")
+      obj_val = NA
+      obj_dist_mat = NA
+      id_1 = NA
+      id_2 = NA
+      group_id = NA
+      time = NA
+    }
+    else if (out$status == 7 | out$status == 13){
+      if (out$status == 7){
+        cat(format("  Optimal matches found"), "\n")
+      }
+      else if (out$status == 13){
+        cat(format("  Time limit reached!"), "\n")
+      }
+      
+      if (approximate == 1) {
+        rel = .relaxation_n(n_tot, out$primal_solution, dist_mat, subset_weight, "highs", round_cplex, trace)
+        out$primal_solution = rel$sol
+        out$objval = rel$obj
+        time = time + rel$time
+      }
+      
+      i_ind = rep(1:(n_tot-1), (n_tot-1):1)  
+      aux = matrix(1:n_tot, nrow = n_tot, ncol = n_tot)
+      j_ind = aux[lower.tri(aux)]
+      
+      group_1 = i_ind[round(out$primal_solution, 1e-10)==1]
+      group_2 = j_ind[round(out$primal_solution, 1e-10)==1]
+      max_groups = apply(cbind(group_1, group_2), 1, max)
+      
+      id_1 = group_1[max_groups<=n_tot]
+      id_2 = group_2[max_groups<=n_tot]
+      
+      #! Group identifier
+      group_id_1 = 1:(length(id_1))
+      group_id_2 = 1:(length(id_2))
+      group_id = c(group_id_1, group_id_2)
+      
+      obj_val = out$objval
+      obj_dist_mat = sum(t(dist_mat)[lower.tri(dist_mat)] * (round(out$primal_solution, 1e-10) == 1))
+    }
+  }
+  
   if (solver=="gurobi") {
     #library("gurobi")
     if (requireNamespace('gurobi', quietly = TRUE)) {
@@ -754,56 +825,61 @@ nmatch = function(dist_mat, subset_weight = NULL, total_pairs = NULL,
   
   if (solver=="glpk") {
     #library("Rglpk")
-    cat(format("  GLPK optimizer is open..."), "\n")
-    dir = rep(NA, length(sense))
-    dir[sense=="E"] = '=='
-    dir[sense=="L"] = '<='
-    dir[sense=="G"] = '>='
-    bound = list(lower = list(ind=c(1:length(ub)), val=rep(0,length(ub))),
-                 upper = list(ind=c(1:length(ub)), val=ub))
-    ptm = proc.time()
-    out = Rglpk_solve_LP(cvec, Amat, dir, bvec, bounds = bound, types = var_type, max = FALSE)
-    time = (proc.time()-ptm)[3]
-    
-    # Output
-    if (out$status!=0) {
-      cat(format("  Error: problem infeasible!"), "\n")
-      obj_val = NA
-      obj_dist_mat = NA
-      id_1 = NA
-      id_2 = NA
-      group_id = NA
-      time = NA
-    }
-    
-    if (out$status==0) {
-      cat(format("  Optimal matches found"), "\n")
+    if (requireNamespace('Rglpk', quietly = TRUE)) {
+      cat(format("  GLPK optimizer is open..."), "\n")
+      dir = rep(NA, length(sense))
+      dir[sense=="E"] = '=='
+      dir[sense=="L"] = '<='
+      dir[sense=="G"] = '>='
+      bound = list(lower = list(ind=c(1:length(ub)), val=rep(0,length(ub))),
+                   upper = list(ind=c(1:length(ub)), val=ub))
+      ptm = proc.time()
+      out = Rglpk::Rglpk_solve_LP(cvec, Amat, dir, bvec, bounds = bound, types = var_type, max = FALSE)
+      time = (proc.time()-ptm)[3]
       
-      if (approximate == 1) {
-        rel = .relaxation_n(n_tot, out$solution, dist_mat, subset_weight, "glpk", round_cplex, trace)
-        out$solution = rel$sol
-        out$optimum = rel$obj
-        time = time + rel$time
+      # Output
+      if (out$status!=0) {
+        cat(format("  Error: problem infeasible!"), "\n")
+        obj_val = NA
+        obj_dist_mat = NA
+        id_1 = NA
+        id_2 = NA
+        group_id = NA
+        time = NA
       }
       
-      i_ind = rep(1:(n_tot-1), (n_tot-1):1)
-      aux = matrix(1:n_tot, nrow = n_tot, ncol = n_tot)
-      j_ind = aux[lower.tri(aux)]
-      
-      group_1 = i_ind[out$solution==1]
-      group_2 = j_ind[out$solution==1]
-      max_groups = apply(cbind(group_1, group_2), 1, max)
-      
-      id_1 = group_1[max_groups<=n_tot]
-      id_2 = group_2[max_groups<=n_tot]
-      
-      #! Group identifier
-      group_id_1 = 1:(length(id_1))
-      group_id_2 = 1:(length(id_2))
-      group_id = c(group_id_1, group_id_2)
-      
-      obj_val = out$optimum
-      obj_dist_mat = sum(t(dist_mat)[lower.tri(dist_mat)] * out$solution)
+      if (out$status==0) {
+        cat(format("  Optimal matches found"), "\n")
+        
+        if (approximate == 1) {
+          rel = .relaxation_n(n_tot, out$solution, dist_mat, subset_weight, "glpk", round_cplex, trace)
+          out$solution = rel$sol
+          out$optimum = rel$obj
+          time = time + rel$time
+        }
+        
+        i_ind = rep(1:(n_tot-1), (n_tot-1):1)
+        aux = matrix(1:n_tot, nrow = n_tot, ncol = n_tot)
+        j_ind = aux[lower.tri(aux)]
+        
+        group_1 = i_ind[out$solution==1]
+        group_2 = j_ind[out$solution==1]
+        max_groups = apply(cbind(group_1, group_2), 1, max)
+        
+        id_1 = group_1[max_groups<=n_tot]
+        id_2 = group_2[max_groups<=n_tot]
+        
+        #! Group identifier
+        group_id_1 = 1:(length(id_1))
+        group_id_2 = 1:(length(id_2))
+        group_id = c(group_id_1, group_id_2)
+        
+        obj_val = out$optimum
+        obj_dist_mat = sum(t(dist_mat)[lower.tri(dist_mat)] * out$solution)
+      }
+    }
+    else {
+      stop('suggested package not installed')
     }
   }
   

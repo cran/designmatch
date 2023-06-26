@@ -71,7 +71,7 @@ where \code{fine_covs} is a matrix where each column is a nominal covariate for 
 \code{solver = list(name = name, t_max = t_max, approximate = 1, round_cplex = 0,}\cr
 \code{    trace_cplex = 0)}.
 	  
-\code{solver} is a string that determines the optimization solver to be used.  The options are: \code{cplex}, \code{glpk}, \code{gurobi} and \code{symphony}.  The default solver is \code{glpk} with \code{approximate = 1}, so that by default an approximate solution is found (see \code{approximate} below).  For an exact solution, we strongly recommend using \code{cplex} or \code{gurobi} as they are much faster than the other solvers, but they do require a license (free for academics, but not for people outside universities).  Between \code{cplex} and \code{gurobi}, note that the installation of the \code{gurobi} interface for R is much simpler.
+\code{solver} is a string that determines the optimization solver to be used.  The options are: \code{cplex}, \code{glpk}, \code{gurobi}, \code{highs}, and \code{symphony}.  The default solver is \code{highs} with \code{approximate = 1}, so that by default an approximate solution is found (see \code{approximate} below).  For an exact solution, we strongly recommend using \code{cplex} or \code{gurobi} as they are much faster than the other solvers, but they do require a license (free for academics, but not for people outside universities).  Between \code{cplex} and \code{gurobi}, note that the installation of the \code{gurobi} interface for R is much simpler.
 
 \code{t_max} is a scalar with the maximum time limit for finding the matches.  This option is specific to \code{cplex} and \code{gurobi}.  If the optimal matches are not found within this time limit, a partial, suboptimal solution is given.  
 	
@@ -149,7 +149,7 @@ tional studies," \emph{Journal of Computational and Graphical Statistics}, 21, 5
 ## (see Rosenbaum 2012 and Zubizarreta et al. 2013 for a discussion).
 ## Here the balance requirements are mean and fine balance for 
 ## different covariates.  We require 50 pairs to be matched.
-## Again, the solver used is glpk with the approximate option.
+## Again, the solver used is HiGHS with the approximate option.
 
 ## Matrix of covariates
 #X_mat = cbind(age, education, black, hispanic, married, nodegree, re74, re75)
@@ -171,7 +171,7 @@ tional studies," \emph{Journal of Computational and Graphical Statistics}, 21, 5
 
 ## Solver options
 #t_max = 60*5
-#solver = "glpk"
+#solver = "highs"
 #approximate = 1
 #solver = list(name = solver, t_max = t_max, approximate = approximate, round_cplex = 0, 
 #trace_cplex = 0)

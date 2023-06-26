@@ -1,4 +1,4 @@
-#! Generate the parameters for cardmatch
+#! Generate the parameters for profmatch
 .problemparameters_profmatch = function(mom_covs, mom_tols, mom_targets) {
   
   if (is.vector(mom_covs) == TRUE){
@@ -42,6 +42,7 @@
   vals = c(vals_mom)
   
   aux = cbind(rows_ind, cols_ind, vals)[order(cols_ind), ]
+  aux = aux[(aux[, 3] != 0),]
   Amat = simple_triplet_matrix(i = aux[, 1], j = aux[, 2], v = aux[, 3])
   
   #! Constraint vector, bvec
