@@ -1,10 +1,10 @@
-33685adfb5060742d93ab1f1bfa579c2 *DESCRIPTION
+55a37634505f6b52c530e90598041930 *DESCRIPTION
 45cba158a6e3de9c2156a518f2f24628 *NAMESPACE
 4035589e4087aa8c0dfc97e90db340f8 *R/absstddif.r
 7d1a85944bcd2594e3ab13ffdd80bd1e *R/addcalip.r
 9017e1fba5bece7acf56712cef12c2d8 *R/bmatch.r
 9dc5166095b7987dbf4e742345004242 *R/cardmatch.r
-9e77b9b929f571ca8ac335edda5e67f1 *R/constraintmatrix.r
+ca1d392d51c97a4cfd362f0a8f8147f2 *R/constraintmatrix.r
 ddd36bec26100d3064a1bf106c36740c *R/distmat.r
 692b745a194a270376faf4842b958a02 *R/distmatch.r
 f562ca6fc19a2951c9fcaaa01cae81dd *R/ecdfplot.r
@@ -12,10 +12,11 @@ d41d8cd98f00b204e9800998ecf8427e *R/errorhandling.r
 a7c14294e78b350eca6b9b036f9f0817 *R/finetab.r
 c98b06b08fd9add6edc0464b9d8d3443 *R/loveplot.r
 d3df5386a7329cd2c93dedac69a83db4 *R/meantab.r
-09803a6063703ebc862e15f714aeda64 *R/nmatch.r
+69aaf15b43d4c72ff3606b2d2ece217f *R/nmatch.r
+61da7fc7a11b84f586c6a093459df04d *R/onattach.r
 c445bfdc992990fc1986f8d2bf524573 *R/oneprob_profmatch.r
 98f291ae461a0b1c18ea5d8858b3eb22 *R/pairsplot.r
-36d380e4bd2fb8bbd551af173cc12056 *R/problemparameters.r
+0ea3c1641bba57aa254dd2834f3c5554 *R/problemparameters.r
 90e08362114fb82097302f29ef213616 *R/problemparameters_cardmatch.r
 60d3a3e224db7c5adf9e7789fa981e5e *R/problemparameters_profmatch.R
 4ef6dd019eb18dbc4f060d44a730d440 *R/profmatch.r

@@ -188,17 +188,17 @@ nmatch = function(dist_mat, subset_weight = NULL, total_pairs = NULL,
         cols_far = c(cols_far, col_ind_far_all)
         vals_far = c(vals_far, vals_far_all)
       }
-      if (is.null(far_groups) && !is.null(far_pairs) && rows_ind_far_pairs[[j]] != -1) {
+      if (is.null(far_groups) && !is.null(far_pairs) && all(rows_ind_far_pairs[[j]] != -1)) {
         rows_far = c(rows_far, rows_ind_far_pairs[[j]])
         cols_far = c(cols_far, cols_ind_far_pairs)
         vals_far = c(vals_far, vals_far_pairs)
       }
-      if (!is.null(far_groups) && !is.null(far_pairs) && rows_ind_far_pairs[[j]] != -1) {
+      if (!is.null(far_groups) && !is.null(far_pairs) && all(rows_ind_far_pairs[[j]] != -1)) {
         rows_far = c(rows_far, row_ind_far_all, rows_ind_far_pairs[[j]])
         cols_far = c(cols_far, col_ind_far_all, cols_ind_far_pairs)
         vals_far = c(vals_far, vals_far_all, vals_far_pairs)
       }
-      if (!is.null(far_groups) && !is.null(far_pairs) && rows_ind_far_pairs[[j]] == -1) {
+      if (!is.null(far_groups) && !is.null(far_pairs) && all(rows_ind_far_pairs[[j]] == -1)) {
         rows_far = c(rows_far, row_ind_far_all)
         cols_far = c(cols_far, col_ind_far_all)
         vals_far = c(vals_far, vals_far_all)
@@ -281,17 +281,17 @@ nmatch = function(dist_mat, subset_weight = NULL, total_pairs = NULL,
         cols_near = c(cols_near, col_ind_near_all)
         vals_near = c(vals_near, vals_near_all)
       }
-      if (is.null(near_groups) && !is.null(near_pairs) && rows_ind_near_pairs[[j]] != -1) {
+      if (is.null(near_groups) && !is.null(near_pairs) && all(rows_ind_near_pairs[[j]] != -1)) {
         rows_near = c(rows_near, rows_ind_near_pairs[[j]])
         cols_near = c(cols_near, cols_ind_near_pairs)
         vals_near = c(vals_near, vals_near_pairs)
       }
-      if (!is.null(near_groups) && !is.null(near_pairs) && rows_ind_near_pairs[[j]] != -1) {
+      if (!is.null(near_groups) && !is.null(near_pairs) && all(rows_ind_near_pairs[[j]] != -1)) {
         rows_near = c(rows_near, row_ind_near_all, rows_ind_near_pairs[[j]])
         cols_near = c(cols_near, col_ind_near_all, cols_ind_near_pairs)
         vals_near = c(vals_near, vals_near_all, vals_near_pairs)
       }
-      if (!is.null(near_groups) && !is.null(near_pairs) && rows_ind_near_pairs[[j]] == -1) {
+      if (!is.null(near_groups) && !is.null(near_pairs) && all(rows_ind_near_pairs[[j]] == -1)) {
         rows_near = c(rows_near, row_ind_near_all)
         cols_near = c(cols_near, col_ind_near_all)
         vals_near = c(vals_near, vals_near_all)
@@ -516,7 +516,7 @@ nmatch = function(dist_mat, subset_weight = NULL, total_pairs = NULL,
       if (!is.null(far_groups)) {
         bvec = c(bvec, rep(0, 1))
       }
-      if (!is.null(far_pairs) && rows_ind_far_pairs[[j]] != -1) {
+      if (!is.null(far_pairs) && all(rows_ind_far_pairs[[j]] != -1)) {
         bvec = c(bvec, rep(0, length(table(rows_ind_far_pairs[[j]]))))
       }
     }
@@ -531,7 +531,7 @@ nmatch = function(dist_mat, subset_weight = NULL, total_pairs = NULL,
       if (!is.null(near_groups)) {
         bvec = c(bvec, rep(0, 1))
       }
-      if (!is.null(near_pairs) && rows_ind_near_pairs[[j]] != -1) {
+      if (!is.null(near_pairs) && all(rows_ind_near_pairs[[j]] != -1)) {
         bvec = c(bvec, rep(0, length(table(rows_ind_near_pairs[[j]]))))
       }
     }
@@ -575,7 +575,7 @@ nmatch = function(dist_mat, subset_weight = NULL, total_pairs = NULL,
       if (!is.null(far_groups)) { 
         sense = c(sense, rep("G", 1)) 
       }
-      if (!is.null(far_pairs) && rows_ind_far_pairs[[j]] != -1) {
+      if (!is.null(far_pairs) && all(rows_ind_far_pairs[[j]] != -1)) {
         sense = c(sense, rep("E", length(table(rows_ind_far_pairs[[j]]))))
       }
     }
@@ -590,7 +590,7 @@ nmatch = function(dist_mat, subset_weight = NULL, total_pairs = NULL,
       if (!is.null(near_groups)) { 
         sense = c(sense, rep("L", 1)) 
       }
-      if (!is.null(near_pairs) && rows_ind_near_pairs[[j]] != -1) {
+      if (!is.null(near_pairs) && all(rows_ind_near_pairs[[j]] != -1)) {
         sense = c(sense, rep("E", length(table(rows_ind_near_pairs[[j]]))))
       }
     }
