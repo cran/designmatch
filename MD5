@@ -1,4 +1,4 @@
-55a37634505f6b52c530e90598041930 *DESCRIPTION
+9d05e1097f2e1aa3bbc956e01c273b5e *DESCRIPTION
 45cba158a6e3de9c2156a518f2f24628 *NAMESPACE
 4035589e4087aa8c0dfc97e90db340f8 *R/absstddif.r
 7d1a85944bcd2594e3ab13ffdd80bd1e *R/addcalip.r
@@ -30,7 +30,7 @@ fca1c5c2ab15ec2207f7f77919cca494 *inst/gurobi_installation.txt
 a8685672a86c1c9e7c630b430a193f5f *man/absstddif.Rd
 24064d46ad3c8d8c0ba66b1d077ce560 *man/bmatch.Rd
 332017726f0e529aa0af7ec67bd736dd *man/cardmatch.Rd
-e61d158873b0ed5f8370adc0a8a7c7fa *man/designmatch-package.Rd
+e203e2cc9db9ff27e4eda20c58470d00 *man/designmatch-package.Rd
 9d510e34095ba20a26ae6ed0e3b7807a *man/distmat.Rd
 af456f0b2fbc3bb7d9c7feeefd3087fe *man/distmatch.Rd
 1d59c6df9d58dd6a7d6d7e94a0a535b8 *man/ecdfplot.Rd

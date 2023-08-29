@@ -12,8 +12,8 @@ Optimal Matched Design of Randomized Experiments and Observational Studies
 \tabular{ll}{
 Package: \tab designmatch\cr
 Type: \tab Package\cr
-Version: \tab 0.2\cr
-Date: \tab 2016-08-09\cr
+Version: \tab 0.5.4\cr
+Date: \tab 2023-08-29\cr
 License: \tab GPL-2 | GPL-3\cr
 }
 }
