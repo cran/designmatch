@@ -5,7 +5,7 @@
 \title{Pairs plot for visualizing matched pairs}
 
 \description{
-	Function for visualizing matched pairs in two dimensions.  
+	Function for visualizing matched pairs in two dimensions.
 }
 
 \usage{
@@ -14,17 +14,17 @@
 
 \arguments{
 	\item{cov1}{a vector for the covariate to be plotted on the x axis.}
-	
+
 	\item{cov2}{a vector for the covariate to be plotted on the y axis.}
 
 	\item{t_id}{a vector of indexes of the treated units.}
 
 	\item{c_id}{a vector of indexes of the matched controls.}
-	
+
 	\item{xlab}{a string specifying the label of the x axis.}
-	
+
 	\item{ylab}{a string specifying the label of the y axis.}
-	
+
 	\item{main}{a string specifying the main title of the plot.}
 }
 
@@ -40,7 +40,7 @@
 }
 
 \author{
-	Jose R. Zubizarreta <zubizarreta@hcp.med.harvard.edu>, Cinar Kilcioglu <ckilcioglu16@gsb.columbia.edu>.
+	Jose R. Zubizarreta, Cinar Kilcioglu.
 }
 
 \examples{
@@ -53,14 +53,14 @@
 
 	# Treatment indicator
 	t_ind = treat
-	
+
 	# Indexes of the treated units
 	t_id = which(t_ind == 1)
-	
+
 	# Indices of the matched controls (obtained using bmatch in designmatch)
-	c_id = c(67, 75, 39, 104, 38, 93, 79, 59, 64, 55, 106, 99, 97, 61, 82, 
+	c_id = c(67, 75, 39, 104, 38, 93, 79, 59, 64, 55, 106, 99, 97, 61, 82,
 	57, 76, 47, 46, 49)
- 
-	# pairsplot	
+
+	# pairsplot
 	pairsplot(rubble, flats, t_id, c_id, "Rubble", "Flats", "")
 }

@@ -3,12 +3,12 @@
 \alias{absstddif}
 
 \title{
-	Absolute standardized differences in means.  
-}	
+	Absolute standardized differences in means.
+}
 
 \description{
 	Function for calculating absolute differences in means between the covariates in the treatment and control groups in terms of the original units of the covariates.  Here, the absolute differences in means are normalized by the simple average of the treated and control standard deviations before matching (see Rosenbaum and Rubin 1985 for details).
-}	
+}
 \usage{
 	absstddif(X_mat, t_ind, std_dif)
 }
@@ -30,7 +30,7 @@
 }
 
 \author{
-	Jose R. Zubizarreta <zubizarreta@hcp.med.harvard.edu>, Cinar Kilcioglu <ckilcioglu16@gsb.columbia.edu>.
+	Jose R. Zubizarreta, Cinar Kilcioglu.
 }
 
 \examples{
